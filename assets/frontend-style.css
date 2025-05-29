@@ -1,0 +1,306 @@
+
+/* الأنماط الأساسية للويدجت */
+.wwp-widget {
+    position: fixed;
+    z-index: 999999;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+}
+
+/* مواقع الويدجت */
+.wwp-widget.bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
+
+.wwp-widget.bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.wwp-widget.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.wwp-widget.top-left {
+    top: 20px;
+    left: 20px;
+}
+
+/* زر الويدجت */
+.wwp-widget-button {
+    width: 60px;
+    height: 60px;
+    background: var(--widget-color, #25D366);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.wwp-widget-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* نافذة الدردشة */
+.wwp-chat-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 320px;
+    max-height: 450px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transform: scale(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+}
+
+.wwp-widget.bottom-left .wwp-chat-window {
+    right: auto;
+    left: 0;
+    transform-origin: bottom left;
+}
+
+.wwp-widget.top-right .wwp-chat-window {
+    bottom: auto;
+    top: 80px;
+    transform-origin: top right;
+}
+
+.wwp-widget.top-left .wwp-chat-window {
+    bottom: auto;
+    top: 80px;
+    right: auto;
+    left: 0;
+    transform-origin: top left;
+}
+
+.wwp-chat-window.open {
+    transform: scale(1);
+}
+
+/* هيدر نافذة الدردشة */
+.wwp-chat-header {
+    background: var(--widget-color, #25D366);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wwp-header-info h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.wwp-header-info p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.wwp-close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.wwp-close-chat:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* محتوى نافذة الدردشة */
+.wwp-chat-body {
+    padding: 20px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.wwp-welcome-message {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.wwp-welcome-message p {
+    margin: 0;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* قائمة الفريق */
+.wwp-team-list h4 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.wwp-team-member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-bottom: 8px;
+}
+
+.wwp-team-member-item:hover {
+    background: #f5f5f5;
+}
+
+.wwp-team-member-item:last-child {
+    margin-bottom: 0;
+}
+
+.wwp-member-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.wwp-member-avatar img,
+.wwp-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wwp-avatar-placeholder {
+    background: var(--widget-color, #25D366);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.wwp-status-online {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    background: #4CAF50;
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.wwp-member-details {
+    flex: 1;
+}
+
+.wwp-member-details h5 {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.wwp-member-details p {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.wwp-chat-button {
+    color: var(--widget-color, #25D366);
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.wwp-team-member-item:hover .wwp-chat-button {
+    background: rgba(37, 211, 102, 0.1);
+}
+
+/* رسالة عدم وجود وكلاء */
+.wwp-no-agents {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.wwp-no-agents p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* تحسينات الموبايل */
+@media (max-width: 480px) {
+    .wwp-chat-window {
+        width: 280px;
+        bottom: 70px;
+    }
+    
+    .wwp-widget.bottom-right {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .wwp-widget.bottom-left {
+        bottom: 15px;
+        left: 15px;
+    }
+}
+
+/* تأثيرات الحركة */
+@keyframes wwp-bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: scale(1);
+    }
+    40%, 43% {
+        transform: scale(1.1);
+    }
+    70% {
+        transform: scale(1.05);
+    }
+    90% {
+        transform: scale(1.02);
+    }
+}
+
+.wwp-widget-button.bounce {
+    animation: wwp-bounce 2s infinite;
+}
+
+/* شريط التمرير المخصص */
+.wwp-chat-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.wwp-chat-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.wwp-chat-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.wwp-chat-body::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
