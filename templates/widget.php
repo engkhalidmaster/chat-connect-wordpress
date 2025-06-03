@@ -31,7 +31,10 @@ $available_members = array_filter($team_members, function($member) {
             <div class="wwp-team-list">
                 <h4>اختر الشخص المناسب للتحدث معه:</h4>
                 <?php foreach ($available_members as $member): ?>
-                <div class="wwp-team-member-item" data-phone="<?php echo esc_attr($member->phone); ?>" data-name="<?php echo esc_attr($member->name); ?>">
+                <div class="wwp-team-member-item" 
+                     data-phone="<?php echo esc_attr($member->phone); ?>" 
+                     data-name="<?php echo esc_attr($member->name); ?>"
+                     data-member-id="<?php echo esc_attr($member->id); ?>">
                     <div class="wwp-member-avatar">
                         <?php if ($member->avatar): ?>
                             <img src="<?php echo esc_url($member->avatar); ?>" alt="<?php echo esc_attr($member->name); ?>">

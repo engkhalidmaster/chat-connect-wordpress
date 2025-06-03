@@ -23,6 +23,14 @@ class WhatsAppWidgetPro {
     
     public function __construct() {
         add_action('init', array($this, 'init'));
+        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
+        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
+        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
+        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
+        
+        // إنشاء جداول قاعدة البيانات عند التفعيل
+        register_activation_hook(__FILE__, array($this, 'create_tables'));
     }
     
     public function init() {
@@ -38,12 +46,6 @@ class WhatsAppWidgetPro {
         
         // عرض الويدجت في الموقع
         add_action('wp_footer', array($this, 'display_widget'));
-        
-        // معالجة حفظ الإعدادات
-        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
-        
-        // إنشاء جداول قاعدة البيانات عند التفعيل
-        register_activation_hook(__FILE__, array($this, 'create_tables'));
     }
     
     public function add_admin_menu() {
@@ -78,7 +80,10 @@ class WhatsAppWidgetPro {
             wp_enqueue_style('wwp-frontend-style', WWP_PLUGIN_URL . 'assets/frontend-style.css', array(), WWP_VERSION);
             wp_enqueue_script('wwp-frontend-script', WWP_PLUGIN_URL . 'assets/frontend-script.js', array('jquery'), WWP_VERSION, true);
             
-            wp_localize_script('wwp-frontend-script', 'wwp_settings', $settings);
+            wp_localize_script('wwp-frontend-script', 'wwp_settings', array_merge($settings, array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wwp_nonce')
+            )));
         }
     }
     
@@ -100,10 +105,15 @@ class WhatsAppWidgetPro {
     }
     
     public function save_settings() {
-        check_ajax_referer('wwp_nonce', 'nonce');
+        // التحقق من الصلاحيات والأمان
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
         
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
         }
         
         $settings = array(
@@ -116,8 +126,120 @@ class WhatsAppWidgetPro {
         );
         
         update_option('wwp_settings', $settings);
-        
         wp_send_json_success('تم حفظ الإعدادات بنجاح');
+    }
+    
+    public function record_click() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
+        
+        global $wpdb;
+        $member_id = intval($_POST['member_id']);
+        $today = current_time('Y-m-d');
+        
+        // تحديث أو إدراج إحصائيات اليوم
+        $wpdb->query($wpdb->prepare(
+            "INSERT INTO {$wpdb->prefix}wwp_stats (date, clicks, member_id) 
+             VALUES (%s, 1, %d) 
+             ON DUPLICATE KEY UPDATE clicks = clicks + 1",
+            $today, $member_id
+        ));
+        
+        wp_send_json_success('تم تسجيل النقرة');
+    }
+    
+    public function add_member() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        global $wpdb;
+        
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'wwp_team_members',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'phone' => sanitize_text_field($_POST['phone']),
+                'department' => sanitize_text_field($_POST['department']),
+                'status' => sanitize_text_field($_POST['status']),
+                'display_order' => intval($_POST['display_order'])
+            ),
+            array('%s', '%s', '%s', '%s', '%d')
+        );
+        
+        if ($result) {
+            wp_send_json_success('تم إضافة العضو بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ أثناء إضافة العضو');
+        }
+    }
+    
+    public function edit_member() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        global $wpdb;
+        
+        $result = $wpdb->update(
+            $wpdb->prefix . 'wwp_team_members',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'phone' => sanitize_text_field($_POST['phone']),
+                'department' => sanitize_text_field($_POST['department']),
+                'status' => sanitize_text_field($_POST['status']),
+                'display_order' => intval($_POST['display_order'])
+            ),
+            array('id' => intval($_POST['member_id'])),
+            array('%s', '%s', '%s', '%s', '%d'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            wp_send_json_success('تم تحديث بيانات العضو بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ أثناء تحديث بيانات العضو');
+        }
+    }
+    
+    public function delete_member() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        global $wpdb;
+        
+        $result = $wpdb->delete(
+            $wpdb->prefix . 'wwp_team_members',
+            array('id' => intval($_POST['member_id'])),
+            array('%d')
+        );
+        
+        if ($result) {
+            wp_send_json_success('تم حذف العضو بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ أثناء حذف العضو');
+        }
     }
     
     public function get_settings() {
@@ -142,8 +264,8 @@ class WhatsAppWidgetPro {
         global $wpdb;
         
         $stats = array();
-        $stats['total_clicks'] = $wpdb->get_var("SELECT SUM(clicks) FROM {$wpdb->prefix}wwp_stats WHERE date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
-        $stats['total_conversations'] = $wpdb->get_var("SELECT SUM(conversations) FROM {$wpdb->prefix}wwp_stats WHERE date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+        $stats['total_clicks'] = intval($wpdb->get_var("SELECT SUM(clicks) FROM {$wpdb->prefix}wwp_stats WHERE date >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
+        $stats['total_conversations'] = intval($wpdb->get_var("SELECT SUM(conversations) FROM {$wpdb->prefix}wwp_stats WHERE date >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
         $stats['daily_stats'] = $wpdb->get_results("SELECT date, clicks, conversations FROM {$wpdb->prefix}wwp_stats WHERE date >= DATE_SUB(NOW(), INTERVAL 30 DAY) ORDER BY date ASC");
         
         return $stats;
@@ -193,6 +315,12 @@ class WhatsAppWidgetPro {
         
         $team_table = $wpdb->prefix . 'wwp_team_members';
         
+        // التحقق من وجود بيانات مسبقة
+        $existing_count = $wpdb->get_var("SELECT COUNT(*) FROM $team_table");
+        if ($existing_count > 0) {
+            return; // تجنب إضافة البيانات التجريبية مرة أخرى
+        }
+        
         $sample_members = array(
             array('محمد أحمد', '+966501234567', 'المبيعات', 'online', 1),
             array('فاطمة علي', '+966507654321', 'الدعم الفني', 'online', 2),
@@ -208,7 +336,8 @@ class WhatsAppWidgetPro {
                     'department' => $member[2],
                     'status' => $member[3],
                     'display_order' => $member[4]
-                )
+                ),
+                array('%s', '%s', '%s', '%s', '%d')
             );
         }
     }
@@ -216,3 +345,4 @@ class WhatsAppWidgetPro {
 
 // تفعيل الإضافة
 new WhatsAppWidgetPro();
+?>

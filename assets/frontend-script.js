@@ -23,6 +23,7 @@ jQuery(document).ready(function($) {
     $('.wwp-team-member-item').on('click', function() {
         var memberName = $(this).data('name');
         var memberPhone = $(this).data('phone');
+        var memberId = $(this).data('member-id') || 0;
         var message = encodeURIComponent(wwp_settings.welcome_message || 'مرحباً');
         
         // فتح WhatsApp
@@ -38,7 +39,9 @@ jQuery(document).ready(function($) {
         }
         
         // تسجيل النقرة في قاعدة البيانات
-        recordClick($(this).data('member-id'));
+        if (memberId > 0) {
+            recordClick(memberId);
+        }
         
         // فتح الرابط
         window.open(whatsappUrl, '_blank');
@@ -61,6 +64,10 @@ jQuery(document).ready(function($) {
     }
     
     function recordClick(memberId) {
+        if (typeof wwp_settings.ajax_url === 'undefined' || typeof wwp_settings.nonce === 'undefined') {
+            return;
+        }
+        
         $.ajax({
             url: wwp_settings.ajax_url,
             type: 'POST',
@@ -68,6 +75,12 @@ jQuery(document).ready(function($) {
                 action: 'wwp_record_click',
                 member_id: memberId,
                 nonce: wwp_settings.nonce
+            },
+            success: function(response) {
+                console.log('تم تسجيل النقرة بنجاح');
+            },
+            error: function() {
+                console.log('خطأ في تسجيل النقرة');
             }
         });
     }
