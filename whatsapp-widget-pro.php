@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Plugin Name: WhatsApp Widget Pro
@@ -23,11 +22,9 @@ class WhatsAppWidgetPro {
     
     public function __construct() {
         add_action('init', array($this, 'init'));
-        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
-        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
-        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
-        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
-        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
+        
+        // تأكد من عدم إرسال الترويسات مسبقاً قبل معالجة AJAX
+        add_action('wp_loaded', array($this, 'handle_ajax_requests'));
         
         // إنشاء جداول قاعدة البيانات عند التفعيل
         register_activation_hook(__FILE__, array($this, 'create_tables'));
@@ -46,6 +43,21 @@ class WhatsAppWidgetPro {
         
         // عرض الويدجت في الموقع
         add_action('wp_footer', array($this, 'display_widget'));
+    }
+    
+    public function handle_ajax_requests() {
+        // التحقق من طلبات AJAX فقط
+        if (!wp_doing_ajax()) {
+            return;
+        }
+        
+        // إضافة معالجات AJAX
+        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
+        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
+        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
+        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
+        add_action('wp_ajax_wwp_backup_settings', array($this, 'backup_settings'));
     }
     
     public function add_admin_menu() {
@@ -240,6 +252,26 @@ class WhatsAppWidgetPro {
         } else {
             wp_send_json_error('حدث خطأ أثناء حذف العضو');
         }
+    }
+    
+    public function backup_settings() {
+        // التحقق من الصلاحيات والأمان
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false) || !current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        $backup_data = array(
+            'timestamp' => current_time('mysql'),
+            'settings' => get_option('wwp_settings', array()),
+            'team_members' => $this->get_team_members(),
+            'plugin_version' => WWP_VERSION
+        );
+        
+        wp_send_json_success(array(
+            'data' => $backup_data,
+            'filename' => 'whatsapp-widget-backup-' . date('Y-m-d') . '.json'
+        ));
     }
     
     public function get_settings() {

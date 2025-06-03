@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, User, Phone, Building, Trash2, Edit, Plus } from 'lucide-react';
+import { Users, User, Phone, Building, Trash2, Edit, Plus, UserPlus, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TeamMember {
@@ -24,6 +24,7 @@ interface Team {
   id: number;
   name: string;
   description: string;
+  color: string;
   members: TeamMember[];
 }
 
@@ -34,10 +35,12 @@ const TeamManagement = () => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddTeamOpen, setIsAddTeamOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   
   const [newTeam, setNewTeam] = useState({
     name: '',
-    description: ''
+    description: '',
+    color: '#25D366'
   });
   
   const [newMember, setNewMember] = useState({
@@ -47,17 +50,27 @@ const TeamManagement = () => {
     isActive: true
   });
 
+  const teamColors = [
+    '#25D366', '#0088CC', '#FF6B35', '#8B5CF6', 
+    '#EF4444', '#10B981', '#F59E0B', '#6366F1'
+  ];
+
   // تحميل البيانات من localStorage عند بدء التشغيل
   useEffect(() => {
     const savedTeams = localStorage.getItem('wwp_teams');
     if (savedTeams) {
-      setTeams(JSON.parse(savedTeams));
+      const parsedTeams = JSON.parse(savedTeams);
+      setTeams(parsedTeams);
+      if (parsedTeams.length > 0 && !selectedTeam) {
+        setSelectedTeam(parsedTeams[0].id);
+      }
     } else {
       // إنشاء فريق افتراضي
       const defaultTeam: Team = {
         id: 1,
-        name: 'فريق خدمة العملاء',
+        name: 'فريق خدمة العملاء الرئيسي',
         description: 'الفريق الأساسي لخدمة العملاء',
+        color: '#25D366',
         members: [
           {
             id: 1,
@@ -93,16 +106,53 @@ const TeamManagement = () => {
         id: Date.now(),
         name: newTeam.name,
         description: newTeam.description,
+        color: newTeam.color,
         members: []
       };
       setTeams([...teams, team]);
-      setNewTeam({ name: '', description: '' });
+      setNewTeam({ name: '', description: '', color: '#25D366' });
       setIsAddTeamOpen(false);
       setSelectedTeam(team.id);
       
       toast({
-        title: "تم إضافة الفريق",
+        title: "تم إضافة الفريق بنجاح",
         description: `تم إضافة فريق "${team.name}" بنجاح`,
+      });
+    }
+  };
+
+  const updateTeam = () => {
+    if (editingTeam) {
+      setTeams(teams.map(team => 
+        team.id === editingTeam.id ? editingTeam : team
+      ));
+      setEditingTeam(null);
+      
+      toast({
+        title: "تم تحديث الفريق",
+        description: `تم تحديث بيانات الفريق بنجاح`,
+      });
+    }
+  };
+
+  const deleteTeam = (teamId: number) => {
+    if (teams.length > 1) {
+      const updatedTeams = teams.filter(team => team.id !== teamId);
+      setTeams(updatedTeams);
+      
+      if (selectedTeam === teamId) {
+        setSelectedTeam(updatedTeams[0]?.id || null);
+      }
+      
+      toast({
+        title: "تم حذف الفريق",
+        description: "تم حذف الفريق بنجاح",
+      });
+    } else {
+      toast({
+        title: "تعذر الحذف",
+        description: "لا يمكن حذف آخر فريق",
+        variant: "destructive",
       });
     }
   };
@@ -124,7 +174,7 @@ const TeamManagement = () => {
       setIsAddMemberOpen(false);
       
       toast({
-        title: "تم إضافة العضو",
+        title: "تم إضافة العضو بنجاح",
         description: `تم إضافة "${member.name}" إلى الفريق بنجاح`,
       });
     }
@@ -186,6 +236,7 @@ const TeamManagement = () => {
 
   const getCurrentTeam = () => teams.find(team => team.id === selectedTeam);
   const currentMembers = getCurrentTeam()?.members || [];
+  const currentTeam = getCurrentTeam();
 
   return (
     <div className="space-y-6">
@@ -194,7 +245,7 @@ const TeamManagement = () => {
           <Users className="h-6 w-6 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">إدارة الفريق</h2>
+          <h2 className="text-2xl font-bold text-gray-900">إدارة الفرق والأعضاء</h2>
           <p className="text-gray-600">إدارة الفرق وأرقام WhatsApp لأعضاء الفريق</p>
         </div>
       </div>
@@ -207,42 +258,127 @@ const TeamManagement = () => {
               <Building className="h-5 w-5" />
               الفرق ({teams.length})
             </span>
-            <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  إضافة فريق جديد
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>إضافة فريق جديد</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="team-name">اسم الفريق</Label>
-                    <Input
-                      id="team-name"
-                      value={newTeam.name}
-                      onChange={(e) => setNewTeam({...newTeam, name: e.target.value})}
-                      placeholder="اسم الفريق"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="team-description">وصف الفريق</Label>
-                    <Input
-                      id="team-description"
-                      value={newTeam.description}
-                      onChange={(e) => setNewTeam({...newTeam, description: e.target.value})}
-                      placeholder="وصف مختصر للفريق"
-                    />
-                  </div>
-                  <Button onClick={addTeam} className="w-full" disabled={!newTeam.name.trim()}>
-                    إضافة الفريق
+            <div className="flex gap-2">
+              {currentTeam && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" onClick={() => setEditingTeam(currentTeam)}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      إعدادات الفريق
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>إعدادات الفريق</DialogTitle>
+                    </DialogHeader>
+                    {editingTeam && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>اسم الفريق</Label>
+                          <Input
+                            value={editingTeam.name}
+                            onChange={(e) => setEditingTeam({...editingTeam, name: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>وصف الفريق</Label>
+                          <Input
+                            value={editingTeam.description}
+                            onChange={(e) => setEditingTeam({...editingTeam, description: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>لون الفريق</Label>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-8 h-8 rounded border-2 border-gray-300"
+                              style={{ backgroundColor: editingTeam.color }}
+                            />
+                            <div className="grid grid-cols-4 gap-1">
+                              {teamColors.map((color) => (
+                                <button
+                                  key={color}
+                                  onClick={() => setEditingTeam({...editingTeam, color})}
+                                  className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={updateTeam} className="flex-1">
+                            حفظ التغييرات
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            onClick={() => deleteTeam(editingTeam.id)}
+                            disabled={teams.length === 1}
+                          >
+                            حذف الفريق
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              )}
+              <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    إضافة فريق جديد
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>إضافة فريق جديد</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="team-name">اسم الفريق</Label>
+                      <Input
+                        id="team-name"
+                        value={newTeam.name}
+                        onChange={(e) => setNewTeam({...newTeam, name: e.target.value})}
+                        placeholder="مثل: فريق المبيعات"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="team-description">وصف الفريق</Label>
+                      <Input
+                        id="team-description"
+                        value={newTeam.description}
+                        onChange={(e) => setNewTeam({...newTeam, description: e.target.value})}
+                        placeholder="وصف مختصر للفريق"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>لون الفريق</Label>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-8 h-8 rounded border-2 border-gray-300"
+                          style={{ backgroundColor: newTeam.color }}
+                        />
+                        <div className="grid grid-cols-4 gap-1">
+                          {teamColors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => setNewTeam({...newTeam, color})}
+                              className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <Button onClick={addTeam} className="w-full" disabled={!newTeam.name.trim()}>
+                      إضافة الفريق
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -253,7 +389,13 @@ const TeamManagement = () => {
             <SelectContent>
               {teams.map((team) => (
                 <SelectItem key={team.id} value={team.id.toString()}>
-                  {team.name} ({team.members.length} أعضاء)
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: team.color }}
+                    />
+                    {team.name} ({team.members.length} أعضاء)
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -267,13 +409,16 @@ const TeamManagement = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
+                <div 
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: currentTeam?.color }}
+                />
                 أعضاء {getCurrentTeam()?.name} ({currentMembers.length})
               </span>
               <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="h-4 w-4 mr-2" />
+                    <UserPlus className="h-4 w-4 mr-2" />
                     إضافة عضو جديد
                   </Button>
                 </DialogTrigger>
@@ -283,12 +428,12 @@ const TeamManagement = () => {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="member-name">الاسم</Label>
+                      <Label htmlFor="member-name">الاسم الكامل</Label>
                       <Input
                         id="member-name"
                         value={newMember.name}
                         onChange={(e) => setNewMember({...newMember, name: e.target.value})}
-                        placeholder="اسم العضو"
+                        placeholder="مثل: أحمد محمد"
                       />
                     </div>
                     <div className="space-y-2">
@@ -300,14 +445,15 @@ const TeamManagement = () => {
                         placeholder="+966501234567"
                         dir="ltr"
                       />
+                      <p className="text-xs text-gray-500">يجب أن يبدأ الرقم برمز الدولة مثل +966</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="member-department">القسم</Label>
+                      <Label htmlFor="member-department">القسم أو التخصص</Label>
                       <Input
                         id="member-department"
                         value={newMember.department}
                         onChange={(e) => setNewMember({...newMember, department: e.target.value})}
-                        placeholder="القسم"
+                        placeholder="مثل: المبيعات، الدعم الفني"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -315,10 +461,10 @@ const TeamManagement = () => {
                         checked={newMember.isActive}
                         onCheckedChange={(checked) => setNewMember({...newMember, isActive: checked})}
                       />
-                      <Label>متاح الآن</Label>
+                      <Label>متاح للعملاء حالياً</Label>
                     </div>
                     <Button onClick={addMember} className="w-full" disabled={!newMember.name || !newMember.phone}>
-                      إضافة العضو
+                      إضافة العضو إلى الفريق
                     </Button>
                   </div>
                 </DialogContent>
@@ -327,9 +473,13 @@ const TeamManagement = () => {
           </CardHeader>
           <CardContent>
             {currentMembers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>لا يوجد أعضاء في هذا الفريق حالياً</p>
+              <div className="text-center py-12 text-gray-500">
+                <UserPlus className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">لا يوجد أعضاء في هذا الفريق</h3>
+                <p className="mb-4">ابدأ بإضافة أول عضو لهذا الفريق</p>
+                <Button onClick={() => setIsAddMemberOpen(true)}>
+                  إضافة عضو جديد
+                </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -348,7 +498,7 @@ const TeamManagement = () => {
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">{member.name}</TableCell>
                         <TableCell className="text-left font-mono" dir="ltr">{member.phone}</TableCell>
-                        <TableCell>{member.department}</TableCell>
+                        <TableCell>{member.department || 'غير محدد'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Switch
@@ -366,7 +516,7 @@ const TeamManagement = () => {
                               <DialogTrigger asChild>
                                 <Button 
                                   variant="outline" 
-                                  onClick={() => setEditingMember(member)}
+                                  onClick={() => setEditingMember({...member})}
                                   className="h-8 w-8 p-0"
                                 >
                                   <Edit className="h-4 w-4" />
@@ -379,7 +529,7 @@ const TeamManagement = () => {
                                 {editingMember && (
                                   <div className="space-y-4">
                                     <div className="space-y-2">
-                                      <Label>الاسم</Label>
+                                      <Label>الاسم الكامل</Label>
                                       <Input
                                         value={editingMember.name}
                                         onChange={(e) => setEditingMember({...editingMember, name: e.target.value})}
@@ -394,7 +544,7 @@ const TeamManagement = () => {
                                       />
                                     </div>
                                     <div className="space-y-2">
-                                      <Label>القسم</Label>
+                                      <Label>القسم أو التخصص</Label>
                                       <Input
                                         value={editingMember.department}
                                         onChange={(e) => setEditingMember({...editingMember, department: e.target.value})}
@@ -405,7 +555,7 @@ const TeamManagement = () => {
                                         checked={editingMember.isActive}
                                         onCheckedChange={(checked) => setEditingMember({...editingMember, isActive: checked})}
                                       />
-                                      <Label>متاح الآن</Label>
+                                      <Label>متاح للعملاء حالياً</Label>
                                     </div>
                                     <Button onClick={updateMember} className="w-full">
                                       حفظ التغييرات
