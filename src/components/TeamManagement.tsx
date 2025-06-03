@@ -183,7 +183,6 @@ const TeamManagement = () => {
                           <Switch
                             checked={member.isActive}
                             onCheckedChange={() => toggleMemberStatus(member.id)}
-                            size="sm"
                           />
                           <Badge variant={member.isActive ? "default" : "secondary"}>
                             {member.isActive ? "متاح" : "غير متاح"}
