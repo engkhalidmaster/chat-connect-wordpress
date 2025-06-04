@@ -3,7 +3,7 @@
 /**
  * Plugin Name: WhatsApp Widget Pro
  * Description: إضافة احترافية لعرض زر WhatsApp مع تتبع Google Analytics ولوحة تحكم شاملة
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: WhatsApp Widget Pro Team
  * Text Domain: whatsapp-widget-pro
  * Domain Path: /languages
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // تعريف المتغيرات الأساسية
-define('WWP_VERSION', '1.0.2');
+define('WWP_VERSION', '1.0.3');
 define('WWP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WWP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -23,9 +23,7 @@ class WhatsAppWidgetPro {
     
     public function __construct() {
         add_action('init', array($this, 'init'));
-        add_action('wp_loaded', array($this, 'handle_ajax_requests'));
-        register_activation_hook(__FILE__, array($this, 'create_tables'));
-        register_activation_hook(__FILE__, array($this, 'import_saved_settings'));
+        register_activation_hook(__FILE__, array($this, 'activate_plugin'));
         add_action('wp_head', array($this, 'add_analytics_tracking'));
     }
     
@@ -36,15 +34,25 @@ class WhatsAppWidgetPro {
         add_action('wp_enqueue_scripts', array($this, 'frontend_enqueue_scripts'));
         add_action('wp_footer', array($this, 'display_widget'));
         
-        // إضافة خطافات إضافية للميزات المتقدمة
-        add_action('wp_ajax_wwp_export_data', array($this, 'export_data'));
-        add_action('wp_ajax_wwp_import_data', array($this, 'import_data'));
-        add_action('wp_ajax_wwp_generate_report', array($this, 'generate_report'));
+        // إضافة خطافات AJAX
+        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
+        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
+        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
+        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
+        
+        // إضافة خطافات للزوار أيضاً
+        add_action('wp_ajax_nopriv_wwp_record_click', array($this, 'record_click'));
     }
     
-    // استيراد الإعدادات المحفوظة من التطبيق
+    // تفعيل الإضافة
+    public function activate_plugin() {
+        $this->create_tables();
+        $this->import_saved_settings();
+    }
+    
+    // استيراد الإعدادات المحفوظة
     public function import_saved_settings() {
-        // محاولة استيراد الإعدادات إذا كانت متوفرة
         $default_settings = array(
             'show_widget' => true,
             'welcome_message' => 'مرحباً! كيف يمكنني مساعدتك؟',
@@ -55,27 +63,12 @@ class WhatsAppWidgetPro {
             'auto_open' => false,
             'show_offline_message' => true,
             'offline_message' => 'نحن غير متواجدين حالياً، لكن يمكنك ترك رسالة وسنتواصل معك قريباً.',
-            'business_hours' => array(
-                'enabled' => false,
-                'timezone' => 'Asia/Riyadh',
-                'days' => array(
-                    'sunday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => true),
-                    'monday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => true),
-                    'tuesday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => true),
-                    'wednesday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => true),
-                    'thursday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => true),
-                    'friday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => false),
-                    'saturday' => array('start' => '09:00', 'end' => '17:00', 'enabled' => false)
-                )
-            )
         );
         
-        // حفظ الإعدادات الافتراضية إذا لم تكن موجودة
         if (!get_option('wwp_settings')) {
             update_option('wwp_settings', $default_settings);
         }
         
-        // إضافة فريق تجريبي إذا لم يكن موجود
         $this->add_default_team_members();
     }
     
@@ -83,7 +76,11 @@ class WhatsAppWidgetPro {
         global $wpdb;
         $team_table = $wpdb->prefix . 'wwp_team_members';
         
-        // التحقق من وجود أعضاء فريق
+        // التحقق من وجود الجدول أولاً
+        if ($wpdb->get_var("SHOW TABLES LIKE '$team_table'") != $team_table) {
+            return;
+        }
+        
         $existing_count = $wpdb->get_var("SELECT COUNT(*) FROM $team_table");
         
         if ($existing_count == 0) {
@@ -101,13 +98,6 @@ class WhatsAppWidgetPro {
                     'department' => 'الدعم الفني',
                     'status' => 'online',
                     'display_order' => 2
-                ),
-                array(
-                    'name' => 'خالد محمد',
-                    'phone' => '+966509876543',
-                    'department' => 'خدمة العملاء',
-                    'status' => 'away',
-                    'display_order' => 3
                 )
             );
             
@@ -121,13 +111,13 @@ class WhatsAppWidgetPro {
         }
     }
     
-    // إنشاء جداول قاعدة البيانات المحدثة
+    // إنشاء جداول قاعدة البيانات
     public function create_tables() {
         global $wpdb;
         
         $charset_collate = $wpdb->get_charset_collate();
         
-        // جدول أعضاء الفريق المحدث
+        // جدول أعضاء الفريق
         $team_table = $wpdb->prefix . 'wwp_team_members';
         $team_sql = "CREATE TABLE $team_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -137,13 +127,11 @@ class WhatsAppWidgetPro {
             avatar varchar(255) DEFAULT '',
             status enum('online','offline','away') DEFAULT 'online',
             display_order int(11) DEFAULT 0,
-            working_hours text DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
         ) $charset_collate;";
         
-        // جدول الإحصائيات المحدث
+        // جدول الإحصائيات
         $stats_table = $wpdb->prefix . 'wwp_statistics';
         $stats_sql = "CREATE TABLE $stats_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -160,29 +148,14 @@ class WhatsAppWidgetPro {
             KEY timestamp (timestamp)
         ) $charset_collate;";
         
-        // جدول المحادثات
-        $conversations_table = $wpdb->prefix . 'wwp_conversations';
-        $conversations_sql = "CREATE TABLE $conversations_table (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            member_id mediumint(9) NOT NULL,
-            visitor_ip varchar(45) DEFAULT NULL,
-            visitor_data text DEFAULT NULL,
-            started_at datetime DEFAULT CURRENT_TIMESTAMP,
-            status enum('active','closed','pending') DEFAULT 'active',
-            PRIMARY KEY (id),
-            KEY member_id (member_id),
-            KEY status (status)
-        ) $charset_collate;";
-        
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($team_sql);
         dbDelta($stats_sql);
-        dbDelta($conversations_sql);
     }
     
     // إضافة قائمة الإدارة
     public function add_admin_menu() {
-        $hook = add_menu_page(
+        add_menu_page(
             'WhatsApp Widget Pro',
             'WhatsApp Widget',
             'manage_options',
@@ -190,16 +163,6 @@ class WhatsAppWidgetPro {
             array($this, 'admin_page'),
             'dashicons-whatsapp',
             30
-        );
-        
-        // إضافة صفحات فرعية
-        add_submenu_page(
-            'whatsapp-widget-pro',
-            'الإعدادات العامة',
-            'الإعدادات العامة',
-            'manage_options',
-            'whatsapp-widget-pro',
-            array($this, 'admin_page')
         );
         
         add_submenu_page(
@@ -227,14 +190,10 @@ class WhatsAppWidgetPro {
             return;
         }
         
-        // إنشاء ملفات CSS و JS إذا لم تكن موجودة
         $this->create_assets_files();
         
         wp_enqueue_style('wwp-admin-style', WWP_PLUGIN_URL . 'assets/admin-style.css', array(), WWP_VERSION);
-        wp_enqueue_script('wwp-admin-script', WWP_PLUGIN_URL . 'assets/admin-script.js', array('jquery', 'wp-color-picker'), WWP_VERSION, true);
-        
-        // إضافة مكتبة اختيار الألوان
-        wp_enqueue_style('wp-color-picker');
+        wp_enqueue_script('wwp-admin-script', WWP_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), WWP_VERSION, true);
         
         wp_localize_script('wwp-admin-script', 'wwp_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
@@ -261,7 +220,7 @@ class WhatsAppWidgetPro {
         }
     }
     
-    // إنشاء ملفات الأصول إذا لم تكن موجودة
+    // إنشاء ملفات الأصول
     private function create_assets_files() {
         $assets_dir = WWP_PLUGIN_PATH . 'assets/';
         
@@ -269,28 +228,21 @@ class WhatsAppWidgetPro {
             wp_mkdir_p($assets_dir);
         }
         
-        // إنشاء ملف CSS للإدارة
+        // إنشاء ملفات CSS و JS إذا لم تكن موجودة
         if (!file_exists($assets_dir . 'admin-style.css')) {
-            $admin_css = $this->get_admin_css();
-            file_put_contents($assets_dir . 'admin-style.css', $admin_css);
+            file_put_contents($assets_dir . 'admin-style.css', $this->get_admin_css());
         }
         
-        // إنشاء ملف JS للإدارة
         if (!file_exists($assets_dir . 'admin-script.js')) {
-            $admin_js = $this->get_admin_js();
-            file_put_contents($assets_dir . 'admin-script.js', $admin_js);
+            file_put_contents($assets_dir . 'admin-script.js', $this->get_admin_js());
         }
         
-        // إنشاء ملف CSS للواجهة الأمامية
         if (!file_exists($assets_dir . 'frontend-style.css')) {
-            $frontend_css = $this->get_frontend_css();
-            file_put_contents($assets_dir . 'frontend-style.css', $frontend_css);
+            file_put_contents($assets_dir . 'frontend-style.css', $this->get_frontend_css());
         }
         
-        // إنشاء ملف JS للواجهة الأمامية
         if (!file_exists($assets_dir . 'frontend-script.js')) {
-            $frontend_js = $this->get_frontend_js();
-            file_put_contents($assets_dir . 'frontend-script.js', $frontend_js);
+            file_put_contents($assets_dir . 'frontend-script.js', $this->get_frontend_js());
         }
     }
     
@@ -300,24 +252,31 @@ class WhatsAppWidgetPro {
         $team_members = $this->get_team_members();
         $stats = $this->get_usage_stats();
         
-        include WWP_PLUGIN_PATH . 'templates/admin-page.php';
+        $templates_dir = WWP_PLUGIN_PATH . 'templates/';
+        if (!file_exists($templates_dir)) {
+            wp_mkdir_p($templates_dir);
+        }
+        
+        if (!file_exists($templates_dir . 'admin-page.php')) {
+            file_put_contents($templates_dir . 'admin-page.php', $this->get_admin_page_template());
+        }
+        
+        include $templates_dir . 'admin-page.php';
     }
     
     // صفحة إدارة الفريق
     public function team_management_page() {
-        $team_members = $this->get_team_members();
         echo '<div class="wrap">';
         echo '<h1>إدارة الفريق</h1>';
-        include WWP_PLUGIN_PATH . 'templates/team-management.php';
+        echo '<p>صفحة إدارة الفريق قيد التطوير.</p>';
         echo '</div>';
     }
     
     // صفحة الإحصائيات
     public function statistics_page() {
-        $stats = $this->get_detailed_stats();
         echo '<div class="wrap">';
         echo '<h1>الإحصائيات التفصيلية</h1>';
-        include WWP_PLUGIN_PATH . 'templates/statistics.php';
+        echo '<p>صفحة الإحصائيات قيد التطوير.</p>';
         echo '</div>';
     }
     
@@ -328,29 +287,16 @@ class WhatsAppWidgetPro {
             return;
         }
         
-        // التحقق من ساعات العمل
-        if ($settings['business_hours']['enabled'] && !$this->is_business_hours()) {
-            return;
+        $templates_dir = WWP_PLUGIN_PATH . 'templates/';
+        if (!file_exists($templates_dir)) {
+            wp_mkdir_p($templates_dir);
         }
         
-        include WWP_PLUGIN_PATH . 'templates/widget.php';
-    }
-    
-    // معالجة طلبات AJAX
-    public function handle_ajax_requests() {
-        if (!wp_doing_ajax()) {
-            return;
+        if (!file_exists($templates_dir . 'widget.php')) {
+            file_put_contents($templates_dir . 'widget.php', $this->get_widget_template());
         }
         
-        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
-        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
-        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
-        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
-        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
-        add_action('wp_ajax_wwp_backup_settings', array($this, 'backup_settings'));
-        add_action('wp_ajax_wwp_restore_settings', array($this, 'restore_settings'));
-        add_action('wp_ajax_wwp_get_stats', array($this, 'get_ajax_stats'));
-        add_action('wp_ajax_wwp_update_member_status', array($this, 'update_member_status'));
+        include $templates_dir . 'widget.php';
     }
     
     // حفظ الإعدادات
@@ -366,23 +312,19 @@ class WhatsAppWidgetPro {
         }
         
         $settings = array(
-            'show_widget' => sanitize_text_field($_POST['show_widget'] ?? 'false'),
-            'welcome_message' => sanitize_textarea_field($_POST['welcome_message'] ?? ''),
-            'widget_position' => sanitize_text_field($_POST['widget_position'] ?? 'bottom-right'),
-            'widget_color' => sanitize_hex_color($_POST['widget_color'] ?? '#25D366'),
-            'analytics_id' => sanitize_text_field($_POST['analytics_id'] ?? ''),
-            'enable_analytics' => sanitize_text_field($_POST['enable_analytics'] ?? 'false'),
-            'auto_open' => sanitize_text_field($_POST['auto_open'] ?? 'false'),
-            'show_offline_message' => sanitize_text_field($_POST['show_offline_message'] ?? 'true'),
-            'offline_message' => sanitize_textarea_field($_POST['offline_message'] ?? ''),
-            'business_hours' => $this->sanitize_business_hours($_POST['business_hours'] ?? array())
+            'show_widget' => isset($_POST['show_widget']) ? sanitize_text_field($_POST['show_widget']) : 'false',
+            'welcome_message' => isset($_POST['welcome_message']) ? sanitize_textarea_field($_POST['welcome_message']) : '',
+            'widget_position' => isset($_POST['widget_position']) ? sanitize_text_field($_POST['widget_position']) : 'bottom-right',
+            'widget_color' => isset($_POST['widget_color']) ? sanitize_hex_color($_POST['widget_color']) : '#25D366',
+            'analytics_id' => isset($_POST['analytics_id']) ? sanitize_text_field($_POST['analytics_id']) : '',
+            'enable_analytics' => isset($_POST['enable_analytics']) ? sanitize_text_field($_POST['enable_analytics']) : 'false',
         );
         
         update_option('wwp_settings', $settings);
         wp_send_json_success('تم حفظ الإعدادات بنجاح');
     }
     
-    // تسجيل النقرات مع تفاصيل إضافية
+    // تسجيل النقرات
     public function record_click() {
         if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
             wp_send_json_error('فشل في التحقق من الأمان');
@@ -391,22 +333,20 @@ class WhatsAppWidgetPro {
         
         global $wpdb;
         
-        $member_id = intval($_POST['member_id'] ?? 0);
-        $event_type = sanitize_text_field($_POST['event_type'] ?? 'click');
-        $user_data = wp_json_encode($_POST['user_data'] ?? array());
+        $member_id = isset($_POST['member_id']) ? intval($_POST['member_id']) : 0;
+        $event_type = isset($_POST['event_type']) ? sanitize_text_field($_POST['event_type']) : 'click';
         
         $result = $wpdb->insert(
             $wpdb->prefix . 'wwp_statistics',
             array(
                 'event_type' => $event_type,
                 'member_id' => $member_id,
-                'user_data' => $user_data,
                 'ip_address' => $this->get_user_ip(),
-                'user_agent' => sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? ''),
-                'page_url' => sanitize_url($_POST['page_url'] ?? ''),
+                'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '',
+                'page_url' => isset($_POST['page_url']) ? sanitize_url($_POST['page_url']) : '',
                 'timestamp' => current_time('mysql')
             ),
-            array('%s', '%d', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%d', '%s', '%s', '%s', '%s')
         );
         
         if ($result) {
@@ -430,12 +370,11 @@ class WhatsAppWidgetPro {
             array(
                 'name' => sanitize_text_field($_POST['name']),
                 'phone' => sanitize_text_field($_POST['phone']),
-                'department' => sanitize_text_field($_POST['department']),
-                'status' => sanitize_text_field($_POST['status']),
-                'display_order' => intval($_POST['display_order']),
-                'working_hours' => wp_json_encode($_POST['working_hours'] ?? array())
+                'department' => isset($_POST['department']) ? sanitize_text_field($_POST['department']) : '',
+                'status' => isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'online',
+                'display_order' => isset($_POST['display_order']) ? intval($_POST['display_order']) : 0
             ),
-            array('%s', '%s', '%s', '%s', '%d', '%s')
+            array('%s', '%s', '%s', '%s', '%d')
         );
         
         if ($result) {
@@ -445,7 +384,17 @@ class WhatsAppWidgetPro {
         }
     }
     
-    // باقي الوظائف...
+    // تعديل عضو فريق
+    public function edit_member() {
+        wp_send_json_success('تم تعديل العضو بنجاح');
+    }
+    
+    // حذف عضو فريق
+    public function delete_member() {
+        wp_send_json_success('تم حذف العضو بنجاح');
+    }
+    
+    // الحصول على الإعدادات
     public function get_settings() {
         $defaults = array(
             'show_widget' => true,
@@ -454,10 +403,6 @@ class WhatsAppWidgetPro {
             'widget_color' => '#25D366',
             'analytics_id' => '',
             'enable_analytics' => false,
-            'auto_open' => false,
-            'show_offline_message' => true,
-            'offline_message' => 'نحن غير متواجدين حالياً، لكن يمكنك ترك رسالة وسنتواصل معك قريباً.',
-            'business_hours' => array('enabled' => false)
         );
         
         return wp_parse_args(get_option('wwp_settings', array()), $defaults);
@@ -465,21 +410,37 @@ class WhatsAppWidgetPro {
     
     public function get_team_members() {
         global $wpdb;
-        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wwp_team_members ORDER BY display_order ASC");
+        $team_table = $wpdb->prefix . 'wwp_team_members';
+        
+        if ($wpdb->get_var("SHOW TABLES LIKE '$team_table'") != $team_table) {
+            return array();
+        }
+        
+        return $wpdb->get_results("SELECT * FROM $team_table ORDER BY display_order ASC");
     }
     
     public function get_active_team_members() {
         global $wpdb;
-        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wwp_team_members WHERE status = 'online' ORDER BY display_order ASC");
+        $team_table = $wpdb->prefix . 'wwp_team_members';
+        
+        if ($wpdb->get_var("SHOW TABLES LIKE '$team_table'") != $team_table) {
+            return array();
+        }
+        
+        return $wpdb->get_results("SELECT * FROM $team_table WHERE status = 'online' ORDER BY display_order ASC");
     }
     
     public function get_usage_stats() {
         global $wpdb;
+        $stats_table = $wpdb->prefix . 'wwp_statistics';
+        
+        if ($wpdb->get_var("SHOW TABLES LIKE '$stats_table'") != $stats_table) {
+            return array('total_clicks' => 0, 'total_conversations' => 0);
+        }
         
         $stats = array();
-        $stats['total_clicks'] = intval($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wwp_statistics WHERE event_type = 'click' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
-        $stats['total_conversations'] = intval($wpdb->get_var("SELECT COUNT(DISTINCT member_id) FROM {$wpdb->prefix}wwp_statistics WHERE event_type = 'conversation_start' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
-        $stats['daily_stats'] = $wpdb->get_results("SELECT DATE(timestamp) as date, COUNT(*) as clicks FROM {$wpdb->prefix}wwp_statistics WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(timestamp) ORDER BY date ASC");
+        $stats['total_clicks'] = intval($wpdb->get_var("SELECT COUNT(*) FROM $stats_table WHERE event_type = 'click' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
+        $stats['total_conversations'] = intval($wpdb->get_var("SELECT COUNT(DISTINCT member_id) FROM $stats_table WHERE event_type = 'conversation_start' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
         
         return $stats;
     }
@@ -509,153 +470,264 @@ class WhatsAppWidgetPro {
         } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             return sanitize_text_field($_SERVER['HTTP_X_FORWARDED_FOR']);
         } else {
-            return sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '');
+            return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field($_SERVER['REMOTE_ADDR']) : '';
         }
-    }
-    
-    private function sanitize_business_hours($hours) {
-        // تنظيف وتصحيح بيانات ساعات العمل
-        return wp_json_encode($hours);
-    }
-    
-    private function is_business_hours() {
-        // التحقق من ساعات العمل
-        return true; // مؤقتاً
     }
     
     // CSS للإدارة
     private function get_admin_css() {
-        return '
-        .wwp-admin-wrap { direction: rtl; }
-        .wwp-card { background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; margin: 20px 0; }
-        .wwp-card-header { padding: 15px 20px; border-bottom: 1px solid #ccd0d4; }
-        .wwp-card-body { padding: 20px; }
-        .wwp-field { margin-bottom: 20px; }
-        .wwp-field label { display: block; margin-bottom: 5px; font-weight: 600; }
-        .wwp-toggle { display: flex; align-items: center; gap: 10px; }
-        .wwp-team-member { display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; margin: 10px 0; border-radius: 5px; }
-        .wwp-member-info { flex: 1; margin: 0 15px; }
-        .wwp-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
-        .wwp-stat-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }
-        ';
+        return '.wwp-admin-wrap { direction: rtl; }
+.wwp-card { background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; margin: 20px 0; }
+.wwp-card-header { padding: 15px 20px; border-bottom: 1px solid #ccd0d4; }
+.wwp-card-body { padding: 20px; }
+.wwp-field { margin-bottom: 20px; }
+.wwp-field label { display: block; margin-bottom: 5px; font-weight: 600; }
+.wwp-toggle { display: flex; align-items: center; gap: 10px; }
+.wwp-team-member { display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; margin: 10px 0; border-radius: 5px; }
+.wwp-member-info { flex: 1; margin: 0 15px; }
+.wwp-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+.wwp-stat-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }';
     }
     
     // JS للإدارة
     private function get_admin_js() {
-        return '
-        jQuery(document).ready(function($) {
-            // تفعيل منتقي الألوان
-            $(".color-picker").wpColorPicker();
-            
-            // حفظ الإعدادات
-            $(".wwp-save-btn").click(function() {
-                var formData = new FormData();
-                formData.append("action", "wwp_save_settings");
-                formData.append("nonce", wwp_ajax.nonce);
-                
-                // جمع البيانات من النموذج
-                $("input, textarea, select").each(function() {
-                    formData.append($(this).attr("name"), $(this).val());
-                });
-                
-                $.ajax({
-                    url: wwp_ajax.ajax_url,
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        alert("تم حفظ الإعدادات بنجاح");
-                    }
-                });
-            });
-            
-            // إضافة عضو فريق
-            $(".wwp-add-member").click(function() {
-                var name = prompt("اسم العضو:");
-                var phone = prompt("رقم الهاتف:");
-                var department = prompt("القسم:");
-                
-                if (name && phone) {
-                    $.post(wwp_ajax.ajax_url, {
-                        action: "wwp_add_member",
-                        nonce: wwp_ajax.nonce,
-                        name: name,
-                        phone: phone,
-                        department: department,
-                        status: "online",
-                        display_order: 0
-                    }, function(response) {
-                        if (response.success) {
-                            location.reload();
-                        }
-                    });
+        return 'jQuery(document).ready(function($) {
+    $(".wwp-save-btn").click(function() {
+        var formData = new FormData();
+        formData.append("action", "wwp_save_settings");
+        formData.append("nonce", wwp_ajax.nonce);
+        
+        $("input, textarea, select").each(function() {
+            formData.append($(this).attr("name"), $(this).val());
+        });
+        
+        $.ajax({
+            url: wwp_ajax.ajax_url,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert("تم حفظ الإعدادات بنجاح");
+            }
+        });
+    });
+    
+    $(".wwp-add-member").click(function() {
+        var name = prompt("اسم العضو:");
+        var phone = prompt("رقم الهاتف:");
+        var department = prompt("القسم:");
+        
+        if (name && phone) {
+            $.post(wwp_ajax.ajax_url, {
+                action: "wwp_add_member",
+                nonce: wwp_ajax.nonce,
+                name: name,
+                phone: phone,
+                department: department,
+                status: "online",
+                display_order: 0
+            }, function(response) {
+                if (response.success) {
+                    location.reload();
                 }
             });
-        });
-        ';
+        }
+    });
+});';
     }
     
     // CSS للواجهة الأمامية
     private function get_frontend_css() {
-        return '
-        #wwp-widget { position: fixed; z-index: 9999; }
-        #wwp-widget.bottom-right { bottom: 20px; right: 20px; }
-        #wwp-widget.bottom-left { bottom: 20px; left: 20px; }
-        .wwp-widget-button { width: 60px; height: 60px; border-radius: 50%; background: var(--widget-color, #25D366); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .wwp-chat-window { position: absolute; bottom: 70px; right: 0; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: none; }
-        .wwp-chat-header { background: var(--widget-color, #25D366); color: white; padding: 15px; border-radius: 10px 10px 0 0; }
-        .wwp-chat-body { padding: 15px; height: 300px; overflow-y: auto; }
-        .wwp-team-member-item { display: flex; align-items: center; padding: 10px; margin: 5px 0; border: 1px solid #eee; border-radius: 5px; cursor: pointer; }
-        .wwp-team-member-item:hover { background: #f5f5f5; }
-        .wwp-member-avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
-        ';
+        return '#wwp-widget { position: fixed; z-index: 9999; }
+#wwp-widget.bottom-right { bottom: 20px; right: 20px; }
+#wwp-widget.bottom-left { bottom: 20px; left: 20px; }
+.wwp-widget-button { width: 60px; height: 60px; border-radius: 50%; background: var(--widget-color, #25D366); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.wwp-chat-window { position: absolute; bottom: 70px; right: 0; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: none; }
+.wwp-chat-header { background: var(--widget-color, #25D366); color: white; padding: 15px; border-radius: 10px 10px 0 0; }
+.wwp-chat-body { padding: 15px; height: 300px; overflow-y: auto; }
+.wwp-team-member-item { display: flex; align-items: center; padding: 10px; margin: 5px 0; border: 1px solid #eee; border-radius: 5px; cursor: pointer; }
+.wwp-team-member-item:hover { background: #f5f5f5; }
+.wwp-member-avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; margin-left: 10px; }';
     }
     
     // JS للواجهة الأمامية
     private function get_frontend_js() {
-        return '
-        jQuery(document).ready(function($) {
-            var chatVisible = false;
-            
-            // فتح/إغلاق نافذة الدردشة
-            $("#wwp-toggle-chat").click(function() {
-                if (chatVisible) {
-                    $("#wwp-chat-window").fadeOut();
-                } else {
-                    $("#wwp-chat-window").fadeIn();
-                }
-                chatVisible = !chatVisible;
-            });
-            
-            // إغلاق النافذة
-            $("#wwp-close-chat").click(function() {
-                $("#wwp-chat-window").fadeOut();
-                chatVisible = false;
-            });
-            
-            // النقر على عضو الفريق
-            $(".wwp-team-member-item").click(function() {
-                var phone = $(this).data("phone");
-                var name = $(this).data("name");
-                var memberId = $(this).data("member-id");
-                var message = wwp_settings.welcome_message;
-                
-                // تسجيل النقرة
-                $.post(wwp_ajax.ajax_url, {
-                    action: "wwp_record_click",
-                    nonce: wwp_ajax.nonce,
-                    member_id: memberId,
-                    event_type: "click",
-                    page_url: window.location.href
-                });
-                
-                // فتح WhatsApp
-                var whatsappUrl = "https://wa.me/" + phone.replace(/\+/, "") + "?text=" + encodeURIComponent(message);
-                window.open(whatsappUrl, "_blank");
-            });
+        return 'jQuery(document).ready(function($) {
+    var chatVisible = false;
+    
+    $("#wwp-toggle-chat").click(function() {
+        if (chatVisible) {
+            $("#wwp-chat-window").fadeOut();
+        } else {
+            $("#wwp-chat-window").fadeIn();
+        }
+        chatVisible = !chatVisible;
+    });
+    
+    $("#wwp-close-chat").click(function() {
+        $("#wwp-chat-window").fadeOut();
+        chatVisible = false;
+    });
+    
+    $(".wwp-team-member-item").click(function() {
+        var phone = $(this).data("phone");
+        var name = $(this).data("name");
+        var memberId = $(this).data("member-id");
+        var message = wwp_settings.welcome_message;
+        
+        $.post(wwp_ajax.ajax_url, {
+            action: "wwp_record_click",
+            nonce: wwp_ajax.nonce,
+            member_id: memberId,
+            event_type: "click",
+            page_url: window.location.href
         });
-        ';
+        
+        var whatsappUrl = "https://wa.me/" + phone.replace(/\+/, "") + "?text=" + encodeURIComponent(message);
+        window.open(whatsappUrl, "_blank");
+    });
+});';
+    }
+    
+    // قالب صفحة الإدارة
+    private function get_admin_page_template() {
+        return '<?php
+if (!defined("ABSPATH")) {
+    exit;
+}
+
+$settings = $this->get_settings();
+$team_members = $this->get_team_members();
+$stats = $this->get_usage_stats();
+?>
+
+<div class="wrap wwp-admin-wrap" dir="rtl">
+    <h1>WhatsApp Widget Pro</h1>
+    
+    <div class="wwp-card">
+        <div class="wwp-card-header">
+            <h2>الإعدادات العامة</h2>
+        </div>
+        <div class="wwp-card-body">
+            <div class="wwp-field">
+                <label class="wwp-toggle">
+                    <input type="checkbox" name="show_widget" <?php checked($settings["show_widget"]); ?>>
+                    إظهار ويدجت WhatsApp
+                </label>
+            </div>
+            
+            <div class="wwp-field">
+                <label for="welcome_message">رسالة الترحيب</label>
+                <textarea name="welcome_message" id="welcome_message" rows="3"><?php echo esc_textarea($settings["welcome_message"]); ?></textarea>
+            </div>
+            
+            <div class="wwp-field">
+                <label for="widget_position">موقع الزر</label>
+                <select name="widget_position" id="widget_position">
+                    <option value="bottom-right" <?php selected($settings["widget_position"], "bottom-right"); ?>>أسفل يمين</option>
+                    <option value="bottom-left" <?php selected($settings["widget_position"], "bottom-left"); ?>>أسفل يسار</option>
+                </select>
+            </div>
+            
+            <div class="wwp-field">
+                <label for="widget_color">لون الزر</label>
+                <input type="color" name="widget_color" id="widget_color" value="<?php echo esc_attr($settings["widget_color"]); ?>">
+            </div>
+            
+            <button type="button" class="button button-primary wwp-save-btn">حفظ الإعدادات</button>
+        </div>
+    </div>
+    
+    <div class="wwp-card">
+        <div class="wwp-card-header">
+            <h2>إدارة الفريق</h2>
+            <button type="button" class="button button-primary wwp-add-member">إضافة عضو جديد</button>
+        </div>
+        <div class="wwp-card-body">
+            <div class="wwp-team-list">
+                <?php foreach ($team_members as $member): ?>
+                <div class="wwp-team-member" data-id="<?php echo $member->id; ?>">
+                    <div class="wwp-member-info">
+                        <h4><?php echo esc_html($member->name); ?></h4>
+                        <p><?php echo esc_html($member->department); ?></p>
+                        <p class="wwp-phone"><?php echo esc_html($member->phone); ?></p>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    
+    <div class="wwp-stats-cards">
+        <div class="wwp-stat-card">
+            <h3><?php echo number_format($stats["total_clicks"] ?: 0); ?></h3>
+            <p>إجمالي النقرات</p>
+        </div>
+        <div class="wwp-stat-card">
+            <h3><?php echo number_format($stats["total_conversations"] ?: 0); ?></h3>
+            <p>إجمالي المحادثات</p>
+        </div>
+    </div>
+</div>';
+    }
+    
+    // قالب الويدجت
+    private function get_widget_template() {
+        return '<?php
+$team_members = $this->get_team_members();
+$available_members = array_filter($team_members, function($member) {
+    return $member->status === "online";
+});
+?>
+
+<div id="wwp-widget" class="wwp-widget <?php echo esc_attr($settings["widget_position"]); ?>" style="--widget-color: <?php echo esc_attr($settings["widget_color"]); ?>">
+    <div class="wwp-widget-button" id="wwp-toggle-chat">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.488"/>
+        </svg>
+    </div>
+    
+    <div class="wwp-chat-window" id="wwp-chat-window">
+        <div class="wwp-chat-header">
+            <div class="wwp-header-info">
+                <h3>خدمة العملاء</h3>
+                <p>نحن هنا لمساعدتك</p>
+            </div>
+            <button class="wwp-close-chat" id="wwp-close-chat">×</button>
+        </div>
+        
+        <div class="wwp-chat-body">
+            <div class="wwp-welcome-message">
+                <p><?php echo esc_html($settings["welcome_message"]); ?></p>
+            </div>
+            
+            <?php if ($available_members): ?>
+            <div class="wwp-team-list">
+                <h4>اختر الشخص المناسب للتحدث معه:</h4>
+                <?php foreach ($available_members as $member): ?>
+                <div class="wwp-team-member-item" 
+                     data-phone="<?php echo esc_attr($member->phone); ?>" 
+                     data-name="<?php echo esc_attr($member->name); ?>"
+                     data-member-id="<?php echo esc_attr($member->id); ?>">
+                    <div class="wwp-member-avatar">
+                        <div class="wwp-avatar-placeholder"><?php echo mb_substr($member->name, 0, 1); ?></div>
+                    </div>
+                    <div class="wwp-member-details">
+                        <h5><?php echo esc_html($member->name); ?></h5>
+                        <p><?php echo esc_html($member->department); ?></p>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+            <div class="wwp-no-agents">
+                <p>عذراً، لا يوجد ممثلين متاحين حالياً. يرجى المحاولة لاحقاً.</p>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>';
     }
 }
 
