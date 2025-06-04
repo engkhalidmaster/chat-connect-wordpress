@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Shield, PackageOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import JSZip from 'jszip';
 
 const Header = () => {
   const { toast } = useToast();
@@ -141,9 +142,12 @@ const Header = () => {
     input.click();
   };
 
-  const handleDownloadPlugin = () => {
+  const handleDownloadPlugin = async () => {
     try {
-      // إنشاء محتوى ملف الإضافة المحدث مع الإعدادات المحفوظة
+      // إنشاء كائن ZIP
+      const zip = new JSZip();
+      
+      // جمع الإعدادات المحفوظة
       const savedSettings = {
         widget_settings: JSON.parse(localStorage.getItem('wwp_settings') || '{}'),
         appearance_settings: JSON.parse(localStorage.getItem('wwp_appearance_settings') || '{}'),
@@ -152,13 +156,15 @@ const Header = () => {
         teams: JSON.parse(localStorage.getItem('wwp_teams') || '[]')
       };
 
-      // إنشاء محتوى ملف الإضافة الرئيسي
-      const pluginMainFile = `<?php
+      // إنشاء الملف الرئيسي للإضافة
+      const mainPluginFile = `<?php
 /**
  * Plugin Name: WhatsApp Widget Pro
+ * Plugin URI: https://whatsappwidgetpro.com
  * Description: إضافة احترافية لعرض زر WhatsApp مع تتبع Google Analytics ولوحة تحكم شاملة
  * Version: 1.0.3
  * Author: WhatsApp Widget Pro Team
+ * License: GPL2
  * Text Domain: whatsapp-widget-pro
  * Domain Path: /languages
  */
@@ -206,6 +212,9 @@ class WhatsAppWidgetPro {
         if (!empty($saved_settings['teams'])) {
             global $wpdb;
             $team_table = $wpdb->prefix . 'wwp_team_members';
+            
+            // حذف البيانات الموجودة أولاً
+            $wpdb->query("DELETE FROM $team_table");
             
             foreach ($saved_settings['teams'] as $team) {
                 $wpdb->insert(
@@ -554,7 +563,7 @@ class WhatsAppWidgetPro {
 new WhatsAppWidgetPro();
 ?>`;
 
-      // إنشاء ملف README
+      // إضافة ملف README.txt
       const readmeContent = `=== WhatsApp Widget Pro ===
 Contributors: whatsappwidgetpro
 Tags: whatsapp, widget, chat, analytics, customer-service
@@ -585,149 +594,685 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 2. فعل الإضافة من لوحة تحكم ووردبريس
 3. اذهب إلى قائمة WhatsApp Widget لتكوين الإعدادات
 
-== Frequently Asked Questions ==
-
-= هل الإضافة مجانية؟ =
-نعم، الإضافة مجانية تماماً.
-
-= هل تدعم اللغة العربية؟ =
-نعم، الإضافة مصممة خصيصاً للمواقع العربية.
-
-= هل يمكن تخصيص المظهر؟ =
-نعم، يمكنك تخصيص الألوان والموقع والرسائل.
-
-== Screenshots ==
-
-1. لوحة التحكم الرئيسية
-2. إدارة الفريق
-3. إعدادات المظهر
-4. إحصائيات الاستخدام
-
 == Changelog ==
 
 = 1.0.3 =
 * إصلاح الأخطاء وتحسين الأداء
 * إضافة ميزات جديدة للإحصائيات
-* تحسين الواجهة العربية
+* تحسين الواجهة العربية`;
 
-= 1.0.2 =
-* إصلاح مشاكل الترويسات
-* تحسين إدارة الفريق
-* إضافة ميزات جديدة للنسخ الاحتياطي
+      // إضافة ملفات CSS
+      const adminCSS = `.wwp-admin-wrap {
+    direction: rtl;
+    font-family: 'Tahoma', sans-serif;
+}
 
-= 1.0.1 =
-* الإصدار الأول
-* إضافة جميع الميزات الأساسية
+.wwp-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin: 20px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 
-== Upgrade Notice ==
+.wwp-card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ccd0d4;
+    background-color: #f9f9f9;
+}
 
-= 1.0.3 =
-إصدار محسن مع إصلاحات هامة وميزات جديدة.`;
+.wwp-card-body {
+    padding: 20px;
+}
 
-      // إنشاء محتوى واحد يحتوي على جميع الملفات
-      const completePluginContent = `
-# WhatsApp Widget Pro - إضافة ووردبريس كاملة
-# تاريخ الإنشاء: ${new Date().toLocaleDateString('ar-SA')}
-# النسخة: 1.0.3
+.wwp-field {
+    margin-bottom: 20px;
+}
 
-===========================================
-ملف whatsapp-widget-pro.php (الملف الرئيسي)
-===========================================
+.wwp-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #23282d;
+}
 
-${pluginMainFile}
+.wwp-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-===========================================
-ملف readme.txt (وصف الإضافة)
-===========================================
+.wwp-team-member {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    margin: 10px 0;
+    border-radius: 5px;
+    background: #fff;
+}
 
-${readmeContent}
+.wwp-member-info {
+    flex: 1;
+    margin: 0 15px;
+}
 
-===========================================
-templates/admin-page.php (صفحة الإدارة)
-===========================================
+.wwp-stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/admin-page.php في المشروع */
+.wwp-stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-===========================================
-templates/widget.php (ويدجت الواجهة الأمامية)
-===========================================
+.wwp-nav-tabs {
+    display: flex;
+    border-bottom: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/widget.php في المشروع */
+.wwp-nav-link {
+    padding: 10px 20px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: #f1f1f1;
+    color: #555;
+    cursor: pointer;
+}
 
-===========================================
-templates/team-management.php (إدارة الفريق)
-===========================================
+.wwp-nav-link.active {
+    background: #fff;
+    border-color: #ccd0d4;
+    color: #0073aa;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/team-management.php في المشروع */
+.wwp-tab-content {
+    display: none;
+}
 
-===========================================
-templates/statistics.php (الإحصائيات)
-===========================================
+.wwp-tab-content.active {
+    display: block;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/statistics.php في المشروع */
+.wwp-btn {
+    background: #0073aa;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
 
-===========================================
-assets/admin-style.css (تنسيقات الإدارة)
-===========================================
+.wwp-btn:hover {
+    background: #005a87;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/admin-style.css في المشروع */
+.wwp-btn-danger {
+    background: #dc3232;
+}
 
-===========================================
-assets/admin-script.js (سكريبت الإدارة)
-===========================================
+.wwp-btn-danger:hover {
+    background: #a00;
+}`;
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/admin-script.js في المشروع */
+      const frontendCSS = `#wwp-widget {
+    position: fixed;
+    z-index: 9999;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-===========================================
-assets/frontend-style.css (تنسيقات الواجهة الأمامية)
-===========================================
+#wwp-widget.bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/frontend-style.css في المشروع */
+#wwp-widget.bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
 
-===========================================
-assets/frontend-script.js (سكريبت الواجهة الأمامية)
-===========================================
+#wwp-widget.top-right {
+    top: 20px;
+    right: 20px;
+}
 
-/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/frontend-script.js في المشروع */
+#wwp-widget.top-left {
+    top: 20px;
+    left: 20px;
+}
 
-===========================================
-تعليمات التنصيب
-===========================================
+.wwp-widget-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--widget-color, #25D366);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    font-size: 24px;
+}
 
-1. إنشاء مجلد جديد باسم "whatsapp-widget-pro" في مجلد wp-content/plugins/
-2. نسخ الملف الرئيسي whatsapp-widget-pro.php إلى هذا المجلد
-3. إنشاء المجلدات الفرعية: templates/ و assets/
-4. نسخ الملفات المطلوبة إلى مجلداتها المناسبة
-5. تفعيل الإضافة من لوحة تحكم ووردبريس
+.wwp-widget-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
 
-===========================================
-الإعدادات المحفوظة
-===========================================
+.wwp-chat-window {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    width: 320px;
+    max-height: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    display: none;
+    overflow: hidden;
+    direction: rtl;
+}
 
-${JSON.stringify(savedSettings, null, 2)}
+.wwp-chat-header {
+    background: var(--widget-color, #25D366);
+    color: white;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-===========================================
-معلومات إضافية
-===========================================
+.wwp-chat-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
 
-- نسخة الإضافة: 1.0.3
-- متوافقة مع ووردبريس 5.0 فما أعلى
-- مصممة خصيصاً للمواقع العربية
-- تدعم Google Analytics
-- واجهة RTL كاملة
-- متجاوبة مع جميع الأجهزة
+.wwp-close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-للدعم الفني، يرجى زيارة موقعنا الإلكتروني.
+.wwp-chat-body {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.wwp-welcome-message {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.wwp-team-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.wwp-team-member-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wwp-team-member-item:hover {
+    background: #f5f5f5;
+    border-color: var(--widget-color, #25D366);
+}
+
+.wwp-member-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: var(--widget-color, #25D366);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.wwp-member-details {
+    flex: 1;
+}
+
+.wwp-member-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.wwp-member-department {
+    font-size: 12px;
+    color: #666;
+}
+
+.wwp-member-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.wwp-member-status.online {
+    background: #4CAF50;
+}
+
+.wwp-member-status.away {
+    background: #FF9800;
+}
+
+.wwp-member-status.offline {
+    background: #9E9E9E;
+}
+
+@media (max-width: 480px) {
+    .wwp-chat-window {
+        width: 300px;
+        left: 10px !important;
+        right: 10px !important;
+    }
+    
+    #wwp-widget.bottom-left,
+    #wwp-widget.bottom-right {
+        left: 20px;
+        right: auto;
+    }
+}`;
+
+      // إضافة ملفات JavaScript
+      const adminJS = `jQuery(document).ready(function($) {
+    // تبديل التبويبات
+    $('.wwp-nav-link').click(function(e) {
+        e.preventDefault();
+        var tab = $(this).data('tab');
+        
+        // إزالة الفئة النشطة من جميع الروابط والتبويبات
+        $('.wwp-nav-link').removeClass('active');
+        $('.wwp-tab-content').removeClass('active');
+        
+        // إضافة الفئة النشطة للعنصر المحدد
+        $(this).addClass('active');
+        $('#' + tab + '-tab').addClass('active');
+    });
+    
+    // تفعيل منتقي الألوان
+    if ($.fn.wpColorPicker) {
+        $('.color-picker').wpColorPicker();
+    }
+    
+    // حفظ الإعدادات
+    $('.wwp-save-btn').click(function() {
+        var formData = new FormData();
+        formData.append('action', 'wwp_save_settings');
+        formData.append('nonce', wwp_ajax.nonce);
+        
+        // جمع البيانات من النموذج
+        $('input[type="text"], input[type="color"], select, textarea').each(function() {
+            if ($(this).attr('name')) {
+                formData.append($(this).attr('name'), $(this).val());
+            }
+        });
+        
+        // جمع checkboxes
+        $('input[type="checkbox"]').each(function() {
+            if ($(this).attr('name')) {
+                formData.append($(this).attr('name'), $(this).is(':checked') ? '1' : '0');
+            }
+        });
+        
+        $.ajax({
+            url: wwp_ajax.ajax_url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('تم حفظ الإعدادات بنجاح');
+                } else {
+                    alert('حدث خطأ أثناء الحفظ');
+                }
+            },
+            error: function() {
+                alert('حدث خطأ في الاتصال');
+            }
+        });
+    });
+    
+    // إضافة عضو فريق
+    $('.wwp-add-member').click(function() {
+        var name = prompt('اسم العضو:');
+        var phone = prompt('رقم الهاتف:');
+        var department = prompt('القسم:');
+        
+        if (name && phone) {
+            $.post(wwp_ajax.ajax_url, {
+                action: 'wwp_add_member',
+                nonce: wwp_ajax.nonce,
+                name: name,
+                phone: phone,
+                department: department || 'خدمة العملاء',
+                status: 'online',
+                display_order: 0
+            }, function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ أثناء الإضافة');
+                }
+            });
+        }
+    });
+    
+    // حذف عضو فريق
+    $('.wwp-delete-member').click(function() {
+        if (confirm('هل أنت متأكد من حذف هذا العضو؟')) {
+            var memberId = $(this).closest('.wwp-team-member').data('id');
+            
+            $.post(wwp_ajax.ajax_url, {
+                action: 'wwp_delete_member',
+                nonce: wwp_ajax.nonce,
+                member_id: memberId
+            }, function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ أثناء الحذف');
+                }
+            });
+        }
+    });
+    
+    // نسخة احتياطية
+    $('.wwp-backup-btn').click(function() {
+        window.location.href = wwp_ajax.ajax_url + '?action=wwp_export_data&nonce=' + wwp_ajax.nonce;
+    });
+});`;
+
+      const frontendJS = `jQuery(document).ready(function($) {
+    var chatVisible = false;
+    
+    // فتح/إغلاق نافذة الدردشة
+    $(document).on('click', '#wwp-toggle-chat', function() {
+        if (chatVisible) {
+            $('#wwp-chat-window').fadeOut();
+        } else {
+            $('#wwp-chat-window').fadeIn();
+        }
+        chatVisible = !chatVisible;
+    });
+    
+    // إغلاق النافذة
+    $(document).on('click', '#wwp-close-chat', function() {
+        $('#wwp-chat-window').fadeOut();
+        chatVisible = false;
+    });
+    
+    // النقر على عضو الفريق
+    $(document).on('click', '.wwp-team-member-item', function() {
+        var phone = $(this).data('phone');
+        var name = $(this).data('name');
+        var memberId = $(this).data('member-id');
+        var message = wwp_settings.welcome_message || 'مرحباً! كيف يمكنني مساعدتك؟';
+        
+        // تسجيل النقرة
+        $.post(wwp_settings.ajax_url, {
+            action: 'wwp_record_click',
+            nonce: wwp_settings.nonce,
+            member_id: memberId,
+            event_type: 'click',
+            page_url: window.location.href
+        });
+        
+        // فتح WhatsApp
+        var whatsappUrl = 'https://wa.me/' + phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(message);
+        window.open(whatsappUrl, '_blank');
+    });
+});`;
+
+      // إضافة الملفات إلى ZIP
+      zip.file('whatsapp-widget-pro.php', mainPluginFile);
+      zip.file('readme.txt', readmeContent);
+      
+      // إنشاء مجلد assets وإضافة الملفات
+      zip.folder('assets')?.file('admin-style.css', adminCSS);
+      zip.folder('assets')?.file('admin-script.js', adminJS);
+      zip.folder('assets')?.file('frontend-style.css', frontendCSS);
+      zip.folder('assets')?.file('frontend-script.js', frontendJS);
+      
+      // إنشاء مجلد templates وإضافة الملفات
+      const adminPageTemplate = `<?php if (!defined('ABSPATH')) exit; ?>
+<div class="wwp-admin-wrap">
+    <h1>WhatsApp Widget Pro</h1>
+    
+    <div class="wwp-nav-tabs">
+        <a href="#" class="wwp-nav-link active" data-tab="general">الإعدادات العامة</a>
+        <a href="#" class="wwp-nav-link" data-tab="team">إدارة الفريق</a>
+        <a href="#" class="wwp-nav-link" data-tab="stats">الإحصائيات</a>
+    </div>
+    
+    <div id="general-tab" class="wwp-tab-content active">
+        <div class="wwp-card">
+            <div class="wwp-card-header">
+                <h2>إعدادات الويدجت</h2>
+            </div>
+            <div class="wwp-card-body">
+                <form method="post" action="">
+                    <div class="wwp-field">
+                        <label for="show_widget">تفعيل الويدجت</label>
+                        <input type="checkbox" name="show_widget" id="show_widget" value="1" <?php checked($settings['show_widget']); ?> />
+                    </div>
+                    
+                    <div class="wwp-field">
+                        <label for="welcome_message">رسالة الترحيب</label>
+                        <textarea name="welcome_message" id="welcome_message" rows="3"><?php echo esc_textarea($settings['welcome_message']); ?></textarea>
+                    </div>
+                    
+                    <div class="wwp-field">
+                        <label for="widget_position">موقع الويدجت</label>
+                        <select name="widget_position" id="widget_position">
+                            <option value="bottom-right" <?php selected($settings['widget_position'], 'bottom-right'); ?>>أسفل يمين</option>
+                            <option value="bottom-left" <?php selected($settings['widget_position'], 'bottom-left'); ?>>أسفل يسار</option>
+                            <option value="top-right" <?php selected($settings['widget_position'], 'top-right'); ?>>أعلى يمين</option>
+                            <option value="top-left" <?php selected($settings['widget_position'], 'top-left'); ?>>أعلى يسار</option>
+                        </select>
+                    </div>
+                    
+                    <div class="wwp-field">
+                        <label for="widget_color">لون الويدجت</label>
+                        <input type="text" name="widget_color" id="widget_color" value="<?php echo esc_attr($settings['widget_color']); ?>" class="color-picker" />
+                    </div>
+                    
+                    <button type="button" class="wwp-btn wwp-save-btn">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="team-tab" class="wwp-tab-content">
+        <div class="wwp-card">
+            <div class="wwp-card-header">
+                <h2>إدارة فريق خدمة العملاء</h2>
+                <button type="button" class="wwp-btn wwp-add-member">إضافة عضو جديد</button>
+            </div>
+            <div class="wwp-card-body">
+                <?php if (!empty($team_members)): ?>
+                    <?php foreach ($team_members as $member): ?>
+                        <div class="wwp-team-member" data-id="<?php echo $member->id; ?>">
+                            <div class="wwp-member-avatar">
+                                <?php echo substr($member->name, 0, 1); ?>
+                            </div>
+                            <div class="wwp-member-info">
+                                <strong><?php echo esc_html($member->name); ?></strong><br>
+                                <small><?php echo esc_html($member->phone); ?> - <?php echo esc_html($member->department); ?></small>
+                            </div>
+                            <button type="button" class="wwp-btn wwp-btn-danger wwp-delete-member">حذف</button>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>لا توجد أعضاء فريق حالياً</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <div id="stats-tab" class="wwp-tab-content">
+        <div class="wwp-card">
+            <div class="wwp-card-header">
+                <h2>إحصائيات الاستخدام</h2>
+            </div>
+            <div class="wwp-card-body">
+                <div class="wwp-stats-cards">
+                    <div class="wwp-stat-card">
+                        <h3>النقرات الشهرية</h3>
+                        <p class="stat-number"><?php echo $stats['total_clicks']; ?></p>
+                    </div>
+                    <div class="wwp-stat-card">
+                        <h3>المحادثات</h3>
+                        <p class="stat-number"><?php echo $stats['total_conversations']; ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>`;
+
+      const widgetTemplate = `<?php if (!defined('ABSPATH')) exit; ?>
+<div id="wwp-widget" class="<?php echo esc_attr($settings['widget_position']); ?>">
+    <button id="wwp-toggle-chat" class="wwp-widget-button" style="--widget-color: <?php echo esc_attr($settings['widget_color']); ?>">
+        💬
+    </button>
+    
+    <div id="wwp-chat-window" class="wwp-chat-window">
+        <div class="wwp-chat-header" style="--widget-color: <?php echo esc_attr($settings['widget_color']); ?>">
+            <h3 class="wwp-chat-title">خدمة العملاء</h3>
+            <button id="wwp-close-chat" class="wwp-close-chat">×</button>
+        </div>
+        
+        <div class="wwp-chat-body">
+            <?php if (!empty($settings['welcome_message'])): ?>
+                <div class="wwp-welcome-message">
+                    <?php echo esc_html($settings['welcome_message']); ?>
+                </div>
+            <?php endif; ?>
+            
+            <ul class="wwp-team-list">
+                <?php 
+                $team_members = $this->get_active_team_members();
+                if (!empty($team_members)): 
+                ?>
+                    <?php foreach ($team_members as $member): ?>
+                        <li class="wwp-team-member-item" 
+                            data-phone="<?php echo esc_attr($member->phone); ?>" 
+                            data-name="<?php echo esc_attr($member->name); ?>"
+                            data-member-id="<?php echo esc_attr($member->id); ?>">
+                            
+                            <div class="wwp-member-avatar">
+                                <?php echo substr($member->name, 0, 1); ?>
+                            </div>
+                            
+                            <div class="wwp-member-details">
+                                <div class="wwp-member-name"><?php echo esc_html($member->name); ?></div>
+                                <div class="wwp-member-department"><?php echo esc_html($member->department); ?></div>
+                            </div>
+                            
+                            <div class="wwp-member-status <?php echo esc_attr($member->status); ?>"></div>
+                        </li>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <li style="text-align: center; padding: 20px;">
+                        لا توجد أعضاء فريق متاحين حالياً
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </div>
+    </div>
+</div>`;
+
+      zip.folder('templates')?.file('admin-page.php', adminPageTemplate);
+      zip.folder('templates')?.file('widget.php', widgetTemplate);
+
+      // إضافة ملف التثبيت
+      const installInstructions = `# تعليمات تثبيت إضافة WhatsApp Widget Pro
+
+## خطوات التثبيت:
+
+1. قم بتحميل الملف المضغوط whatsapp-widget-pro.zip
+2. اذهب إلى لوحة تحكم ووردبريس > الإضافات > إضافة جديد
+3. اضغط على "رفع إضافة" في أعلى الصفحة
+4. اختر الملف المضغوط whatsapp-widget-pro.zip
+5. اضغط على "تثبيت الآن"
+6. بعد انتهاء التثبيت، اضغط على "تفعيل الإضافة"
+
+## بعد التفعيل:
+
+1. ستجد قائمة جديدة في الشريط الجانبي باسم "WhatsApp Widget"
+2. اضغط عليها لفتح إعدادات الإضافة
+3. قم بتكوين الإعدادات حسب احتياجاتك
+4. أضف أعضاء فريق خدمة العملاء
+5. احفظ الإعدادات
+
+## المتطلبات:
+
+- ووردبريس 5.0 أو أحدث
+- PHP 7.4 أو أحدث
+- MySQL 5.6 أو أحدث
+
+## الدعم الفني:
+
+للحصول على الدعم الفني أو الإبلاغ عن مشاكل، يرجى التواصل معنا.
+
+إضافة WhatsApp Widget Pro
+النسخة 1.0.3
 `;
 
-      // إنشاء ملف للتحميل
-      const dataBlob = new Blob([completePluginContent], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(dataBlob);
+      zip.file('تعليمات_التثبيت.txt', installInstructions);
+
+      // توليد الملف المضغوط
+      const content = await zip.generateAsync({ type: 'blob' });
       
       // إنشاء رابط التحميل
+      const url = URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `whatsapp-widget-pro-complete-v1.0.3-${new Date().toISOString().split('T')[0]}.txt`;
+      link.download = `whatsapp-widget-pro-v1.0.3-${new Date().toISOString().split('T')[0]}.zip`;
       
       // تحميل الملف
       document.body.appendChild(link);
@@ -738,14 +1283,15 @@ ${JSON.stringify(savedSettings, null, 2)}
       URL.revokeObjectURL(url);
       
       toast({
-        title: "تم تحميل الإضافة الكاملة بنجاح",
-        description: "تم تحميل جميع ملفات الإضافة مع الإعدادات المحفوظة. اتبع تعليمات التنصيب المرفقة.",
+        title: "تم تحميل الإضافة الكاملة بنجاح!",
+        description: "تم إنشاء ملف ZIP مضغوط يحتوي على جميع ملفات الإضافة جاهز للتنصيب في ووردبريس",
       });
+
     } catch (error) {
       console.error('خطأ في تحميل الإضافة:', error);
       toast({
         title: "خطأ في التحميل",
-        description: "حدث خطأ أثناء تحميل ملفات الإضافة",
+        description: "حدث خطأ أثناء إنشاء ملف الإضافة المضغوط",
         variant: "destructive",
       });
     }
@@ -776,7 +1322,7 @@ ${JSON.stringify(savedSettings, null, 2)}
             className="text-purple-600 border-purple-200 hover:bg-purple-50"
           >
             <PackageOpen className="h-4 w-4 mr-2" />
-            تحميل الإضافة الكاملة
+            تحميل الإضافة الكاملة ZIP
           </Button>
           
           <Button 
