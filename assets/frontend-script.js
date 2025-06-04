@@ -1,109 +1,149 @@
 
 jQuery(document).ready(function($) {
-    
+    var chatVisible = false;
+    var widget = $('#wwp-widget');
     var chatWindow = $('#wwp-chat-window');
     var toggleButton = $('#wwp-toggle-chat');
     var closeButton = $('#wwp-close-chat');
     
+    // التحقق من وجود الويدجت
+    if (!widget.length) {
+        return;
+    }
+    
     // فتح/إغلاق نافذة الدردشة
-    toggleButton.on('click', function() {
-        if (chatWindow.hasClass('open')) {
-            closeChatWindow();
+    toggleButton.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (chatVisible) {
+            chatWindow.fadeOut(200);
         } else {
-            openChatWindow();
+            chatWindow.fadeIn(200);
+            
+            // تسجيل فتح النافذة
+            if (typeof wwp_settings !== 'undefined') {
+                recordEvent('chat_opened');
+            }
         }
+        chatVisible = !chatVisible;
     });
     
-    // إغلاق نافذة الدردشة
-    closeButton.on('click', function() {
-        closeChatWindow();
+    // إغلاق النافذة بالزر
+    closeButton.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        chatWindow.fadeOut(200);
+        chatVisible = false;
+    });
+    
+    // إغلاق النافذة بالنقر خارجها
+    $(document).on('click', function(e) {
+        if (chatVisible && !$(e.target).closest('#wwp-widget').length) {
+            chatWindow.fadeOut(200);
+            chatVisible = false;
+        }
     });
     
     // النقر على عضو الفريق
-    $('.wwp-team-member-item').on('click', function() {
-        var memberName = $(this).data('name');
-        var memberPhone = $(this).data('phone');
-        var memberId = $(this).data('member-id') || 0;
-        var message = encodeURIComponent(wwp_settings.welcome_message || 'مرحباً');
+    $('.wwp-team-member-item').on('click', function(e) {
+        e.preventDefault();
         
-        // فتح WhatsApp
-        var whatsappUrl = 'https://wa.me/' + memberPhone.replace(/[^0-9]/g, '') + '?text=' + message;
+        var phone = $(this).data('phone');
+        var name = $(this).data('name');
+        var memberId = $(this).data('member-id');
         
-        // تتبع النقرة في Google Analytics
-        if (wwp_settings.enable_analytics && typeof gtag !== 'undefined') {
-            gtag('event', 'whatsapp_click', {
-                'event_category': 'WhatsApp Widget',
-                'event_label': memberName,
-                'member_phone': memberPhone
-            });
-        }
-        
-        // تسجيل النقرة في قاعدة البيانات
-        if (memberId > 0) {
-            recordClick(memberId);
-        }
-        
-        // فتح الرابط
-        window.open(whatsappUrl, '_blank');
-        
-        // إغلاق نافذة الدردشة
-        closeChatWindow();
-    });
-    
-    function openChatWindow() {
-        chatWindow.addClass('open');
-        toggleButton.addClass('active');
-        
-        // إيقاف التأثير المتحرك
-        toggleButton.removeClass('bounce');
-    }
-    
-    function closeChatWindow() {
-        chatWindow.removeClass('open');
-        toggleButton.removeClass('active');
-    }
-    
-    function recordClick(memberId) {
-        if (typeof wwp_settings.ajax_url === 'undefined' || typeof wwp_settings.nonce === 'undefined') {
+        if (!phone) {
+            console.error('رقم الهاتف غير موجود');
             return;
         }
         
-        $.ajax({
-            url: wwp_settings.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'wwp_record_click',
-                member_id: memberId,
-                nonce: wwp_settings.nonce
-            },
-            success: function(response) {
-                console.log('تم تسجيل النقرة بنجاح');
-            },
-            error: function() {
-                console.log('خطأ في تسجيل النقرة');
-            }
+        // تنظيف رقم الهاتف
+        var cleanPhone = phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+        
+        // إنشاء رسالة الترحيب
+        var message = 'مرحباً، أريد التحدث معكم';
+        if (typeof wwp_settings !== 'undefined' && wwp_settings.welcome_message) {
+            message = wwp_settings.welcome_message;
+        }
+        
+        // تسجيل النقرة
+        recordEvent('member_clicked', {
+            member_id: memberId,
+            member_name: name,
+            phone: phone
         });
-    }
-    
-    // إضافة تأثير متحرك للزر كل 10 ثوان
-    setInterval(function() {
-        if (!chatWindow.hasClass('open')) {
-            toggleButton.addClass('bounce');
-            setTimeout(function() {
-                toggleButton.removeClass('bounce');
-            }, 2000);
+        
+        // فتح WhatsApp
+        var whatsappUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(message);
+        
+        // محاولة فتح التطبيق أولاً، ثم المتصفح
+        var newWindow = window.open(whatsappUrl, '_blank');
+        
+        if (!newWindow) {
+            // إذا فشل فتح النافذة الجديدة، استخدم الرابط المباشر
+            window.location.href = whatsappUrl;
         }
-    }, 10000);
-    
-    // إغلاق النافذة عند النقر خارجها
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('#wwp-widget').length) {
-            closeChatWindow();
-        }
+        
+        // إغلاق نافذة الدردشة
+        setTimeout(function() {
+            chatWindow.fadeOut(200);
+            chatVisible = false;
+        }, 500);
     });
     
-    // تحسين الاستجابة للموبايل
-    if (window.innerWidth <= 480) {
-        $('#wwp-widget').addClass('mobile-optimized');
+    // تسجيل الأحداث
+    function recordEvent(eventType, eventData) {
+        if (typeof wwp_settings === 'undefined' || !wwp_settings.ajax_url) {
+            return;
+        }
+        
+        var data = {
+            action: 'wwp_record_click',
+            nonce: wwp_settings.nonce,
+            event_type: eventType,
+            page_url: window.location.href,
+            user_agent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+        };
+        
+        if (eventData) {
+            data.user_data = JSON.stringify(eventData);
+            if (eventData.member_id) {
+                data.member_id = eventData.member_id;
+            }
+        }
+        
+        $.post(wwp_settings.ajax_url, data).fail(function() {
+            console.log('فشل في تسجيل الحدث');
+        });
+        
+        // إرسال حدث إلى Google Analytics إذا كان مفعلاً
+        if (typeof gtag !== 'undefined' && wwp_settings.enable_analytics) {
+            gtag('event', eventType, {
+                event_category: 'WhatsApp Widget',
+                event_label: eventData ? eventData.member_name : '',
+                value: eventData ? eventData.member_id : 0
+            });
+        }
     }
+    
+    // تفعيل الويدجت تلقائياً بعد وقت معين (إذا كان مفعلاً)
+    if (typeof wwp_settings !== 'undefined' && wwp_settings.auto_open && wwp_settings.auto_open !== 'false') {
+        setTimeout(function() {
+            if (!chatVisible) {
+                chatWindow.fadeIn(300);
+                chatVisible = true;
+                recordEvent('auto_opened');
+            }
+        }, 5000); // 5 ثوان
+    }
+    
+    // تسجيل تحميل الصفحة
+    recordEvent('page_loaded');
 });
+
+// إضافة دعم للمس (touch) على الأجهزة المحمولة
+if ('ontouchstart' in window) {
+    document.addEventListener('touchstart', function() {}, false);
+}

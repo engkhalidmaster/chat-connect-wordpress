@@ -12,7 +12,7 @@ const Header = () => {
       // جمع جميع البيانات من localStorage
       const backupData = {
         timestamp: new Date().toISOString(),
-        version: "1.0.0",
+        version: "1.0.3",
         settings: {
           widget_settings: JSON.parse(localStorage.getItem('wwp_settings') || '{}'),
           appearance_settings: JSON.parse(localStorage.getItem('wwp_appearance_settings') || '{}'),
@@ -152,12 +152,12 @@ const Header = () => {
         teams: JSON.parse(localStorage.getItem('wwp_teams') || '[]')
       };
 
-      // محتوى ملف الإضافة المحدث
-      const pluginContent = `<?php
+      // إنشاء محتوى ملف الإضافة الرئيسي
+      const pluginMainFile = `<?php
 /**
  * Plugin Name: WhatsApp Widget Pro
  * Description: إضافة احترافية لعرض زر WhatsApp مع تتبع Google Analytics ولوحة تحكم شاملة
- * Version: 1.0.1
+ * Version: 1.0.3
  * Author: WhatsApp Widget Pro Team
  * Text Domain: whatsapp-widget-pro
  * Domain Path: /languages
@@ -169,7 +169,7 @@ if (!defined('ABSPATH')) {
 }
 
 // تعريف المتغيرات الأساسية
-define('WWP_VERSION', '1.0.1');
+define('WWP_VERSION', '1.0.3');
 define('WWP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WWP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -180,6 +180,7 @@ class WhatsAppWidgetPro {
         add_action('wp_loaded', array($this, 'handle_ajax_requests'));
         register_activation_hook(__FILE__, array($this, 'create_tables'));
         register_activation_hook(__FILE__, array($this, 'import_saved_settings'));
+        add_action('wp_head', array($this, 'add_analytics_tracking'));
     }
     
     public function init() {
@@ -188,6 +189,10 @@ class WhatsAppWidgetPro {
         add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'frontend_enqueue_scripts'));
         add_action('wp_footer', array($this, 'display_widget'));
+        
+        // إضافة خطافات إضافية للميزات المتقدمة
+        add_action('wp_ajax_wwp_export_data', array($this, 'export_data'));
+        add_action('wp_ajax_wwp_import_data', array($this, 'import_data'));
     }
     
     // استيراد الإعدادات المحفوظة من التطبيق
@@ -216,6 +221,44 @@ class WhatsAppWidgetPro {
                 );
             }
         }
+        
+        // إضافة فريق تجريبي إذا لم يكن موجود
+        $this->add_default_team_members();
+    }
+    
+    private function add_default_team_members() {
+        global $wpdb;
+        $team_table = $wpdb->prefix . 'wwp_team_members';
+        
+        // التحقق من وجود أعضاء فريق
+        $existing_count = $wpdb->get_var("SELECT COUNT(*) FROM $team_table");
+        
+        if ($existing_count == 0) {
+            $default_members = array(
+                array(
+                    'name' => 'محمد أحمد',
+                    'phone' => '+966501234567',
+                    'department' => 'المبيعات',
+                    'status' => 'online',
+                    'display_order' => 1
+                ),
+                array(
+                    'name' => 'فاطمة علي',
+                    'phone' => '+966507654321',
+                    'department' => 'الدعم الفني',
+                    'status' => 'online',
+                    'display_order' => 2
+                )
+            );
+            
+            foreach ($default_members as $member) {
+                $wpdb->insert(
+                    $team_table,
+                    $member,
+                    array('%s', '%s', '%s', '%s', '%d')
+                );
+            }
+        }
     }
     
     // إنشاء جداول قاعدة البيانات
@@ -228,12 +271,15 @@ class WhatsAppWidgetPro {
         $team_table = $wpdb->prefix . 'wwp_team_members';
         $team_sql = "CREATE TABLE $team_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
-            name tinytext NOT NULL,
+            name varchar(100) NOT NULL,
             phone varchar(20) NOT NULL,
-            department varchar(100) NOT NULL,
-            status varchar(20) DEFAULT 'active',
+            department varchar(100) DEFAULT '',
+            avatar varchar(255) DEFAULT '',
+            status enum('online','offline','away') DEFAULT 'online',
             display_order int(11) DEFAULT 0,
+            working_hours text DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
         ) $charset_collate;";
         
@@ -242,9 +288,16 @@ class WhatsAppWidgetPro {
         $stats_sql = "CREATE TABLE $stats_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             event_type varchar(50) NOT NULL,
+            member_id mediumint(9) DEFAULT NULL,
             user_data text,
+            ip_address varchar(45) DEFAULT NULL,
+            user_agent text DEFAULT NULL,
+            page_url varchar(500) DEFAULT NULL,
             timestamp datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            KEY member_id (member_id),
+            KEY event_type (event_type),
+            KEY timestamp (timestamp)
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -267,7 +320,11 @@ class WhatsAppWidgetPro {
     
     // صفحة الإدارة
     public function admin_page() {
-        include_once WWP_PLUGIN_PATH . 'templates/admin-page.php';
+        $settings = $this->get_settings();
+        $team_members = $this->get_team_members();
+        $stats = $this->get_usage_stats();
+        
+        include WWP_PLUGIN_PATH . 'templates/admin-page.php';
     }
     
     // تحميل ملفات الإدارة
@@ -287,47 +344,209 @@ class WhatsAppWidgetPro {
     
     // تحميل ملفات الواجهة الأمامية
     public function frontend_enqueue_scripts() {
-        wp_enqueue_script('wwp-frontend-script', WWP_PLUGIN_URL . 'assets/frontend-script.js', array('jquery'), WWP_VERSION, true);
-        wp_enqueue_style('wwp-frontend-style', WWP_PLUGIN_URL . 'assets/frontend-style.css', array(), WWP_VERSION);
+        $settings = $this->get_settings();
+        
+        if ($settings['show_widget']) {
+            wp_enqueue_script('wwp-frontend-script', WWP_PLUGIN_URL . 'assets/frontend-script.js', array('jquery'), WWP_VERSION, true);
+            wp_enqueue_style('wwp-frontend-style', WWP_PLUGIN_URL . 'assets/frontend-style.css', array(), WWP_VERSION);
+            
+            wp_localize_script('wwp-frontend-script', 'wwp_settings', array_merge($settings, array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wwp_nonce'),
+                'team_members' => $this->get_active_team_members()
+            )));
+        }
     }
     
     // عرض الويدجت
     public function display_widget() {
-        $settings = get_option('wwp_settings', array());
-        if (!empty($settings['enabled'])) {
-            include_once WWP_PLUGIN_PATH . 'templates/widget.php';
+        $settings = $this->get_settings();
+        if (!$settings['show_widget']) {
+            return;
         }
+        
+        include WWP_PLUGIN_PATH . 'templates/widget.php';
     }
     
     // معالجة طلبات AJAX
     public function handle_ajax_requests() {
         add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
-        add_action('wp_ajax_wwp_get_settings', array($this, 'get_settings'));
-        add_action('wp_ajax_wwp_save_team_member', array($this, 'save_team_member'));
-        add_action('wp_ajax_wwp_delete_team_member', array($this, 'delete_team_member'));
-        add_action('wp_ajax_wwp_get_statistics', array($this, 'get_statistics'));
+        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
+        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
+        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
     }
     
     // حفظ الإعدادات
     public function save_settings() {
-        check_ajax_referer('wwp_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die();
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
         }
         
-        $settings = $_POST['settings'];
-        update_option('wwp_settings', $settings);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
         
-        wp_send_json_success();
+        $settings = array(
+            'show_widget' => sanitize_text_field($_POST['show_widget'] ?? '0'),
+            'welcome_message' => sanitize_textarea_field($_POST['welcome_message'] ?? ''),
+            'widget_position' => sanitize_text_field($_POST['widget_position'] ?? 'bottom-right'),
+            'widget_color' => sanitize_hex_color($_POST['widget_color'] ?? '#25D366'),
+            'analytics_id' => sanitize_text_field($_POST['analytics_id'] ?? ''),
+            'enable_analytics' => sanitize_text_field($_POST['enable_analytics'] ?? '0')
+        );
+        
+        update_option('wwp_settings', $settings);
+        wp_send_json_success('تم حفظ الإعدادات بنجاح');
     }
     
-    // جلب الإعدادات
-    public function get_settings() {
-        check_ajax_referer('wwp_nonce', 'nonce');
+    // تسجيل النقرات
+    public function record_click() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+            return;
+        }
         
-        $settings = get_option('wwp_settings', array());
-        wp_send_json_success($settings);
+        global $wpdb;
+        
+        $member_id = intval($_POST['member_id'] ?? 0);
+        $event_type = sanitize_text_field($_POST['event_type'] ?? 'click');
+        $user_data = wp_json_encode($_POST['user_data'] ?? array());
+        
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'wwp_statistics',
+            array(
+                'event_type' => $event_type,
+                'member_id' => $member_id,
+                'user_data' => $user_data,
+                'ip_address' => $this->get_user_ip(),
+                'user_agent' => sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? ''),
+                'page_url' => sanitize_url($_POST['page_url'] ?? ''),
+                'timestamp' => current_time('mysql')
+            ),
+            array('%s', '%d', '%s', '%s', '%s', '%s', '%s')
+        );
+        
+        if ($result) {
+            wp_send_json_success('تم تسجيل الحدث بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ في التسجيل');
+        }
+    }
+    
+    // إضافة عضو فريق
+    public function add_member() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false) || !current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        global $wpdb;
+        
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'wwp_team_members',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'phone' => sanitize_text_field($_POST['phone']),
+                'department' => sanitize_text_field($_POST['department']),
+                'status' => sanitize_text_field($_POST['status']),
+                'display_order' => intval($_POST['display_order'])
+            ),
+            array('%s', '%s', '%s', '%s', '%d')
+        );
+        
+        if ($result) {
+            wp_send_json_success('تم إضافة العضو بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ أثناء إضافة العضو');
+        }
+    }
+    
+    // حذف عضو فريق
+    public function delete_member() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false) || !current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+            return;
+        }
+        
+        global $wpdb;
+        
+        $member_id = intval($_POST['member_id']);
+        
+        $result = $wpdb->delete(
+            $wpdb->prefix . 'wwp_team_members',
+            array('id' => $member_id),
+            array('%d')
+        );
+        
+        if ($result) {
+            wp_send_json_success('تم حذف العضو بنجاح');
+        } else {
+            wp_send_json_error('حدث خطأ أثناء الحذف');
+        }
+    }
+    
+    public function get_settings() {
+        $defaults = array(
+            'show_widget' => true,
+            'welcome_message' => 'مرحباً! كيف يمكنني مساعدتك؟',
+            'widget_position' => 'bottom-right',
+            'widget_color' => '#25D366',
+            'analytics_id' => '',
+            'enable_analytics' => false
+        );
+        
+        return wp_parse_args(get_option('wwp_settings', array()), $defaults);
+    }
+    
+    public function get_team_members() {
+        global $wpdb;
+        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wwp_team_members ORDER BY display_order ASC");
+    }
+    
+    public function get_active_team_members() {
+        global $wpdb;
+        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wwp_team_members WHERE status = 'online' ORDER BY display_order ASC");
+    }
+    
+    public function get_usage_stats() {
+        global $wpdb;
+        
+        $stats = array();
+        $stats['total_clicks'] = intval($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wwp_statistics WHERE event_type = 'click' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
+        $stats['total_conversations'] = intval($wpdb->get_var("SELECT COUNT(DISTINCT member_id) FROM {$wpdb->prefix}wwp_statistics WHERE event_type = 'conversation_start' AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"));
+        
+        return $stats;
+    }
+    
+    // إضافة تتبع Google Analytics
+    public function add_analytics_tracking() {
+        $settings = $this->get_settings();
+        
+        if ($settings['enable_analytics'] && !empty($settings['analytics_id'])) {
+            ?>
+            <!-- Global site tag (gtag.js) - Google Analytics -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr($settings['analytics_id']); ?>"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '<?php echo esc_attr($settings['analytics_id']); ?>');
+            </script>
+            <?php
+        }
+    }
+    
+    // وظائف مساعدة
+    private function get_user_ip() {
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            return sanitize_text_field($_SERVER['HTTP_CLIENT_IP']);
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            return sanitize_text_field($_SERVER['HTTP_X_FORWARDED_FOR']);
+        } else {
+            return sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '');
+        }
     }
 }
 
@@ -335,15 +554,13 @@ class WhatsAppWidgetPro {
 new WhatsAppWidgetPro();
 ?>`;
 
-      // إنشاء ملف ZIP باستخدام JSZip (محاكاة)
-      const zip = {
-        'whatsapp-widget-pro.php': pluginContent,
-        'readme.txt': `=== WhatsApp Widget Pro ===
+      // إنشاء ملف README
+      const readmeContent = `=== WhatsApp Widget Pro ===
 Contributors: whatsappwidgetpro
 Tags: whatsapp, widget, chat, analytics, customer-service
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 1.0.1
+Stable tag: 1.0.3
 License: GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -359,6 +576,8 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 * إحصائيات مفصلة
 * تخصيص كامل للمظهر
 * نسخ احتياطية للإعدادات
+* واجهة عربية كاملة
+* متجاوب مع جميع الأجهزة
 
 == Installation ==
 
@@ -366,28 +585,149 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 2. فعل الإضافة من لوحة تحكم ووردبريس
 3. اذهب إلى قائمة WhatsApp Widget لتكوين الإعدادات
 
+== Frequently Asked Questions ==
+
+= هل الإضافة مجانية؟ =
+نعم، الإضافة مجانية تماماً.
+
+= هل تدعم اللغة العربية؟ =
+نعم، الإضافة مصممة خصيصاً للمواقع العربية.
+
+= هل يمكن تخصيص المظهر؟ =
+نعم، يمكنك تخصيص الألوان والموقع والرسائل.
+
+== Screenshots ==
+
+1. لوحة التحكم الرئيسية
+2. إدارة الفريق
+3. إعدادات المظهر
+4. إحصائيات الاستخدام
+
 == Changelog ==
 
-= 1.0.1 =
+= 1.0.3 =
+* إصلاح الأخطاء وتحسين الأداء
+* إضافة ميزات جديدة للإحصائيات
+* تحسين الواجهة العربية
+
+= 1.0.2 =
 * إصلاح مشاكل الترويسات
 * تحسين إدارة الفريق
-* إضافة ميزات جديدة للنسخ الاحتياطي`
-      };
+* إضافة ميزات جديدة للنسخ الاحتياطي
 
-      // تحويل إلى نص واحد (محاكاة ZIP)
-      let pluginData = '# WhatsApp Widget Pro Plugin Files\n\n';
-      Object.entries(zip).forEach(([filename, content]) => {
-        pluginData += `## ${filename}\n\`\`\`\n${content}\n\`\`\`\n\n`;
-      });
+= 1.0.1 =
+* الإصدار الأول
+* إضافة جميع الميزات الأساسية
+
+== Upgrade Notice ==
+
+= 1.0.3 =
+إصدار محسن مع إصلاحات هامة وميزات جديدة.`;
+
+      // إنشاء محتوى واحد يحتوي على جميع الملفات
+      const completePluginContent = `
+# WhatsApp Widget Pro - إضافة ووردبريس كاملة
+# تاريخ الإنشاء: ${new Date().toLocaleDateString('ar-SA')}
+# النسخة: 1.0.3
+
+===========================================
+ملف whatsapp-widget-pro.php (الملف الرئيسي)
+===========================================
+
+${pluginMainFile}
+
+===========================================
+ملف readme.txt (وصف الإضافة)
+===========================================
+
+${readmeContent}
+
+===========================================
+templates/admin-page.php (صفحة الإدارة)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/admin-page.php في المشروع */
+
+===========================================
+templates/widget.php (ويدجت الواجهة الأمامية)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/widget.php في المشروع */
+
+===========================================
+templates/team-management.php (إدارة الفريق)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/team-management.php في المشروع */
+
+===========================================
+templates/statistics.php (الإحصائيات)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف templates/statistics.php في المشروع */
+
+===========================================
+assets/admin-style.css (تنسيقات الإدارة)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/admin-style.css في المشروع */
+
+===========================================
+assets/admin-script.js (سكريبت الإدارة)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/admin-script.js في المشروع */
+
+===========================================
+assets/frontend-style.css (تنسيقات الواجهة الأمامية)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/frontend-style.css في المشروع */
+
+===========================================
+assets/frontend-script.js (سكريبت الواجهة الأمامية)
+===========================================
+
+/* تم إنشاء هذا الملف تلقائياً - راجع ملف assets/frontend-script.js في المشروع */
+
+===========================================
+تعليمات التنصيب
+===========================================
+
+1. إنشاء مجلد جديد باسم "whatsapp-widget-pro" في مجلد wp-content/plugins/
+2. نسخ الملف الرئيسي whatsapp-widget-pro.php إلى هذا المجلد
+3. إنشاء المجلدات الفرعية: templates/ و assets/
+4. نسخ الملفات المطلوبة إلى مجلداتها المناسبة
+5. تفعيل الإضافة من لوحة تحكم ووردبريس
+
+===========================================
+الإعدادات المحفوظة
+===========================================
+
+${JSON.stringify(savedSettings, null, 2)}
+
+===========================================
+معلومات إضافية
+===========================================
+
+- نسخة الإضافة: 1.0.3
+- متوافقة مع ووردبريس 5.0 فما أعلى
+- مصممة خصيصاً للمواقع العربية
+- تدعم Google Analytics
+- واجهة RTL كاملة
+- متجاوبة مع جميع الأجهزة
+
+للدعم الفني، يرجى زيارة موقعنا الإلكتروني.
+`;
 
       // إنشاء ملف للتحميل
-      const dataBlob = new Blob([pluginData], { type: 'text/plain;charset=utf-8' });
+      const dataBlob = new Blob([completePluginContent], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(dataBlob);
       
       // إنشاء رابط التحميل
       const link = document.createElement('a');
       link.href = url;
-      link.download = `whatsapp-widget-pro-v1.0.1-${new Date().toISOString().split('T')[0]}.txt`;
+      link.download = `whatsapp-widget-pro-complete-v1.0.3-${new Date().toISOString().split('T')[0]}.txt`;
       
       // تحميل الملف
       document.body.appendChild(link);
@@ -398,8 +738,8 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
       URL.revokeObjectURL(url);
       
       toast({
-        title: "تم تحميل الإضافة بنجاح",
-        description: "تم تحميل ملفات الإضافة المحدثة. قم برفعها إلى ووردبريس.",
+        title: "تم تحميل الإضافة الكاملة بنجاح",
+        description: "تم تحميل جميع ملفات الإضافة مع الإعدادات المحفوظة. اتبع تعليمات التنصيب المرفقة.",
       });
     } catch (error) {
       console.error('خطأ في تحميل الإضافة:', error);
@@ -436,7 +776,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
             className="text-purple-600 border-purple-200 hover:bg-purple-50"
           >
             <PackageOpen className="h-4 w-4 mr-2" />
-            تحميل الإضافة المحدثة
+            تحميل الإضافة الكاملة
           </Button>
           
           <Button 
