@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Shield, PackageOpen } from 'lucide-react';
@@ -217,8 +218,117 @@ class WhatsAppWidgetPro {
         }
     }
     
-    // باقي كود الإضافة يبقى كما هو...
-    // ${pluginCode}
+    // إنشاء جداول قاعدة البيانات
+    public function create_tables() {
+        global $wpdb;
+        
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        // جدول أعضاء الفريق
+        $team_table = $wpdb->prefix . 'wwp_team_members';
+        $team_sql = "CREATE TABLE $team_table (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            name tinytext NOT NULL,
+            phone varchar(20) NOT NULL,
+            department varchar(100) NOT NULL,
+            status varchar(20) DEFAULT 'active',
+            display_order int(11) DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+        
+        // جدول الإحصائيات
+        $stats_table = $wpdb->prefix . 'wwp_statistics';
+        $stats_sql = "CREATE TABLE $stats_table (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            event_type varchar(50) NOT NULL,
+            user_data text,
+            timestamp datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($team_sql);
+        dbDelta($stats_sql);
+    }
+    
+    // إضافة قائمة الإدارة
+    public function add_admin_menu() {
+        add_menu_page(
+            'WhatsApp Widget Pro',
+            'WhatsApp Widget',
+            'manage_options',
+            'whatsapp-widget-pro',
+            array($this, 'admin_page'),
+            'dashicons-whatsapp',
+            30
+        );
+    }
+    
+    // صفحة الإدارة
+    public function admin_page() {
+        include_once WWP_PLUGIN_PATH . 'templates/admin-page.php';
+    }
+    
+    // تحميل ملفات الإدارة
+    public function admin_enqueue_scripts($hook) {
+        if ($hook != 'toplevel_page_whatsapp-widget-pro') {
+            return;
+        }
+        
+        wp_enqueue_script('wwp-admin-script', WWP_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), WWP_VERSION, true);
+        wp_enqueue_style('wwp-admin-style', WWP_PLUGIN_URL . 'assets/admin-style.css', array(), WWP_VERSION);
+        
+        wp_localize_script('wwp-admin-script', 'wwp_ajax', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wwp_nonce')
+        ));
+    }
+    
+    // تحميل ملفات الواجهة الأمامية
+    public function frontend_enqueue_scripts() {
+        wp_enqueue_script('wwp-frontend-script', WWP_PLUGIN_URL . 'assets/frontend-script.js', array('jquery'), WWP_VERSION, true);
+        wp_enqueue_style('wwp-frontend-style', WWP_PLUGIN_URL . 'assets/frontend-style.css', array(), WWP_VERSION);
+    }
+    
+    // عرض الويدجت
+    public function display_widget() {
+        $settings = get_option('wwp_settings', array());
+        if (!empty($settings['enabled'])) {
+            include_once WWP_PLUGIN_PATH . 'templates/widget.php';
+        }
+    }
+    
+    // معالجة طلبات AJAX
+    public function handle_ajax_requests() {
+        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_wwp_get_settings', array($this, 'get_settings'));
+        add_action('wp_ajax_wwp_save_team_member', array($this, 'save_team_member'));
+        add_action('wp_ajax_wwp_delete_team_member', array($this, 'delete_team_member'));
+        add_action('wp_ajax_wwp_get_statistics', array($this, 'get_statistics'));
+    }
+    
+    // حفظ الإعدادات
+    public function save_settings() {
+        check_ajax_referer('wwp_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die();
+        }
+        
+        $settings = $_POST['settings'];
+        update_option('wwp_settings', $settings);
+        
+        wp_send_json_success();
+    }
+    
+    // جلب الإعدادات
+    public function get_settings() {
+        check_ajax_referer('wwp_nonce', 'nonce');
+        
+        $settings = get_option('wwp_settings', array());
+        wp_send_json_success($settings);
+    }
 }
 
 // تفعيل الإضافة
