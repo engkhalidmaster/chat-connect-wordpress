@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Download, Settings } from "lucide-react";
 import { useState } from "react";
@@ -469,16 +470,13 @@ class WhatsAppWidgetPro {
         $settings = $this->get_settings();
         
         if ($settings['enable_analytics'] === 'true' && !empty($settings['analytics_id'])) {
-            ?>
-            <!-- Global site tag (gtag.js) - Google Analytics -->
-            <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr($settings['analytics_id']); ?>"></script>
-            <script>
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '<?php echo esc_attr($settings['analytics_id']); ?>');
-            </script>
-            <?php
+            echo '<script async src="https://www.googletagmanager.com/gtag/js?id=' . esc_attr($settings['analytics_id']) . '"></script>';
+            echo '<script>';
+            echo 'window.dataLayer = window.dataLayer || [];';
+            echo 'function gtag(){dataLayer.push(arguments);}';
+            echo 'gtag("js", new Date());';
+            echo 'gtag("config", "' . esc_attr($settings['analytics_id']) . '");';
+            echo '</script>';
         }
     }
     
@@ -514,310 +512,293 @@ class WhatsAppWidgetPro {
     
     // JS للإدارة
     private function get_admin_js() {
-        return 'jQuery(document).ready(function($) {
-    $(".wwp-save-btn").click(function() {
-        var formData = new FormData();
-        formData.append("action", "wwp_save_settings");
-        formData.append("nonce", wwp_ajax.nonce);
+        return 'jQuery(document).ready(function($) {' +
+    '$(".wwp-save-btn").click(function() {' +
+        'var formData = new FormData();' +
+        'formData.append("action", "wwp_save_settings");' +
+        'formData.append("nonce", wwp_ajax.nonce);' +
         
-        $("input, textarea, select").each(function() {
-            var name = $(this).attr("name");
-            var value = $(this).val();
-            if ($(this).attr("type") === "checkbox") {
-                value = $(this).is(":checked") ? "true" : "false";
-            }
-            if (name) {
-                formData.append(name, value);
-            }
-        });
+        '$("input, textarea, select").each(function() {' +
+            'var name = $(this).attr("name");' +
+            'var value = $(this).val();' +
+            'if ($(this).attr("type") === "checkbox") {' +
+                'value = $(this).is(":checked") ? "true" : "false";' +
+            '}' +
+            'if (name) {' +
+                'formData.append(name, value);' +
+            '}' +
+        '});' +
         
-        $.ajax({
-            url: wwp_ajax.ajax_url,
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    alert("تم حفظ الإعدادات بنجاح");
-                } else {
-                    alert("حدث خطأ: " + response.data);
-                }
-            },
-            error: function() {
-                alert("حدث خطأ في الاتصال");
-            }
-        });
-    });
+        '$.ajax({' +
+            'url: wwp_ajax.ajax_url,' +
+            'type: "POST",' +
+            'data: formData,' +
+            'processData: false,' +
+            'contentType: false,' +
+            'success: function(response) {' +
+                'if (response.success) {' +
+                    'alert("تم حفظ الإعدادات بنجاح");' +
+                '} else {' +
+                    'alert("حدث خطأ: " + response.data);' +
+                '}' +
+            '},' +
+            'error: function() {' +
+                'alert("حدث خطأ في الاتصال");' +
+            '}' +
+        '});' +
+    '});' +
     
-    $(".wwp-add-member").click(function() {
-        var name = prompt("اسم العضو:");
-        var phone = prompt("رقم الهاتف:");
-        var department = prompt("القسم:");
+    '$(".wwp-add-member").click(function() {' +
+        'var name = prompt("اسم العضو:");' +
+        'var phone = prompt("رقم الهاتف:");' +
+        'var department = prompt("القسم:");' +
         
-        if (name && phone) {
-            $.post(wwp_ajax.ajax_url, {
-                action: "wwp_add_member",
-                nonce: wwp_ajax.nonce,
-                name: name,
-                phone: phone,
-                department: department || "",
-                status: "online",
-                display_order: 0
-            }, function(response) {
-                if (response.success) {
-                    alert("تم إضافة العضو بنجاح");
-                    location.reload();
-                } else {
-                    alert("حدث خطأ: " + response.data);
-                }
-            });
-        }
-    });
-});';
+        'if (name && phone) {' +
+            '$.post(wwp_ajax.ajax_url, {' +
+                'action: "wwp_add_member",' +
+                'nonce: wwp_ajax.nonce,' +
+                'name: name,' +
+                'phone: phone,' +
+                'department: department || "",' +
+                'status: "online",' +
+                'display_order: 0' +
+            '}, function(response) {' +
+                'if (response.success) {' +
+                    'alert("تم إضافة العضو بنجاح");' +
+                    'location.reload();' +
+                '} else {' +
+                    'alert("حدث خطأ: " + response.data);' +
+                '}' +
+            '});' +
+        '}' +
+    '});' +
+'});';
     }
     
     // CSS للواجهة الأمامية
     private function get_frontend_css() {
-        return '#wwp-widget { position: fixed; z-index: 9999; }
-#wwp-widget.bottom-right { bottom: 20px; right: 20px; }
-#wwp-widget.bottom-left { bottom: 20px; left: 20px; }
-.wwp-widget-button { width: 60px; height: 60px; border-radius: 50%; background: var(--widget-color, #25D366); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
-.wwp-widget-button:hover { transform: scale(1.1); }
-.wwp-chat-window { position: absolute; bottom: 70px; right: 0; width: 350px; max-height: 500px; background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: none; overflow: hidden; }
-.wwp-chat-header { background: var(--widget-color, #25D366); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-.wwp-chat-header h3 { margin: 0; font-size: 16px; }
-.wwp-close-chat { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
-.wwp-chat-body { padding: 15px; max-height: 350px; overflow-y: auto; }
-.wwp-welcome-message { background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-.wwp-team-member-item { display: flex; align-items: center; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: background 0.3s ease; }
-.wwp-team-member-item:hover { background: #f5f5f5; }
-.wwp-member-avatar { width: 45px; height: 45px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; margin-left: 12px; font-weight: bold; color: #666; position: relative; }
-.wwp-avatar-placeholder { font-size: 18px; }
-.wwp-status-online { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #4CAF50; border-radius: 50%; border: 2px solid white; }
-.wwp-member-details h5 { margin: 0 0 5px 0; font-size: 14px; color: #333; }
-.wwp-member-details p { margin: 0; font-size: 12px; color: #666; }
-.wwp-chat-button { margin-right: auto; color: #25D366; }
-.wwp-no-agents { text-align: center; padding: 20px; color: #666; }';
+        return '#wwp-widget { position: fixed; z-index: 9999; }' +
+'#wwp-widget.bottom-right { bottom: 20px; right: 20px; }' +
+'#wwp-widget.bottom-left { bottom: 20px; left: 20px; }' +
+'.wwp-widget-button { width: 60px; height: 60px; border-radius: 50%; background: var(--widget-color, #25D366); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; }' +
+'.wwp-widget-button:hover { transform: scale(1.1); }' +
+'.wwp-chat-window { position: absolute; bottom: 70px; right: 0; width: 350px; max-height: 500px; background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: none; overflow: hidden; }' +
+'.wwp-chat-header { background: var(--widget-color, #25D366); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }' +
+'.wwp-chat-header h3 { margin: 0; font-size: 16px; }' +
+'.wwp-close-chat { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }' +
+'.wwp-chat-body { padding: 15px; max-height: 350px; overflow-y: auto; }' +
+'.wwp-welcome-message { background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; }' +
+'.wwp-team-member-item { display: flex; align-items: center; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: background 0.3s ease; }' +
+'.wwp-team-member-item:hover { background: #f5f5f5; }' +
+'.wwp-member-avatar { width: 45px; height: 45px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; margin-left: 12px; font-weight: bold; color: #666; position: relative; }' +
+'.wwp-avatar-placeholder { font-size: 18px; }' +
+'.wwp-status-online { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #4CAF50; border-radius: 50%; border: 2px solid white; }' +
+'.wwp-member-details h5 { margin: 0 0 5px 0; font-size: 14px; color: #333; }' +
+'.wwp-member-details p { margin: 0; font-size: 12px; color: #666; }' +
+'.wwp-chat-button { margin-right: auto; color: #25D366; }' +
+'.wwp-no-agents { text-align: center; padding: 20px; color: #666; }';
     }
     
     // JS للواجهة الأمامية
     private function get_frontend_js() {
-        return 'jQuery(document).ready(function($) {
-    var chatVisible = false;
+        return 'jQuery(document).ready(function($) {' +
+    'var chatVisible = false;' +
     
-    $("#wwp-toggle-chat").click(function() {
-        if (chatVisible) {
-            $("#wwp-chat-window").fadeOut(300);
-        } else {
-            $("#wwp-chat-window").fadeIn(300);
-        }
-        chatVisible = !chatVisible;
-    });
+    '$("#wwp-toggle-chat").click(function() {' +
+        'if (chatVisible) {' +
+            '$("#wwp-chat-window").fadeOut(300);' +
+        '} else {' +
+            '$("#wwp-chat-window").fadeIn(300);' +
+        '}' +
+        'chatVisible = !chatVisible;' +
+    '});' +
     
-    $("#wwp-close-chat").click(function() {
-        $("#wwp-chat-window").fadeOut(300);
-        chatVisible = false;
-    });
+    '$("#wwp-close-chat").click(function() {' +
+        '$("#wwp-chat-window").fadeOut(300);' +
+        'chatVisible = false;' +
+    '});' +
     
-    $(".wwp-team-member-item").click(function() {
-        var phone = $(this).data("phone");
-        var name = $(this).data("name");
-        var memberId = $(this).data("member-id");
-        var message = wwp_settings.welcome_message || "مرحباً! كيف يمكنني مساعدتك؟";
+    '$(".wwp-team-member-item").click(function() {' +
+        'var phone = $(this).data("phone");' +
+        'var name = $(this).data("name");' +
+        'var memberId = $(this).data("member-id");' +
+        'var message = wwp_settings.welcome_message || "مرحباً! كيف يمكنني مساعدتك؟";' +
         
-        // تسجيل النقرة
-        $.post(wwp_settings.ajax_url, {
-            action: "wwp_record_click",
-            nonce: wwp_settings.nonce,
-            member_id: memberId,
-            event_type: "click",
-            page_url: window.location.href
-        });
+        '$.post(wwp_settings.ajax_url, {' +
+            'action: "wwp_record_click",' +
+            'nonce: wwp_settings.nonce,' +
+            'member_id: memberId,' +
+            'event_type: "click",' +
+            'page_url: window.location.href' +
+        '});' +
         
-        // فتح WhatsApp
-        var cleanPhone = phone.replace(/[^0-9+]/g, "");
-        var whatsappUrl = "https://wa.me/" + cleanPhone + "?text=" + encodeURIComponent(message);
-        window.open(whatsappUrl, "_blank");
+        'var cleanPhone = phone.replace(/[^0-9+]/g, "");' +
+        'var whatsappUrl = "https://wa.me/" + cleanPhone + "?text=" + encodeURIComponent(message);' +
+        'window.open(whatsappUrl, "_blank");' +
         
-        // إغلاق النافذة
-        $("#wwp-chat-window").fadeOut(300);
-        chatVisible = false;
-    });
+        '$("#wwp-chat-window").fadeOut(300);' +
+        'chatVisible = false;' +
+    '});' +
     
-    // إغلاق النافذة عند النقر خارجها
-    $(document).click(function(event) {
-        if (!$(event.target).closest("#wwp-widget").length && chatVisible) {
-            $("#wwp-chat-window").fadeOut(300);
-            chatVisible = false;
-        }
-    });
-});';
+    '$(document).click(function(event) {' +
+        'if (!$(event.target).closest("#wwp-widget").length && chatVisible) {' +
+            '$("#wwp-chat-window").fadeOut(300);' +
+            'chatVisible = false;' +
+        '}' +
+    '});' +
+'});';
     }
     
     // قالب صفحة الإدارة
     private function get_admin_page_template() {
-        return '<?php
-if (!defined("ABSPATH")) {
-    exit;
-}
-?>
+        return '<?php' +
+'if (!defined("ABSPATH")) {' +
+    'exit;' +
+'}' +
+'?>' +
 
-<div class="wrap wwp-admin-wrap" dir="rtl">
-    <h1>WhatsApp Widget Pro</h1>
+'<div class="wrap wwp-admin-wrap" dir="rtl">' +
+    '<h1>WhatsApp Widget Pro</h1>' +
     
-    <div class="wwp-card">
-        <div class="wwp-card-header">
-            <h2>الإعدادات العامة</h2>
-        </div>
-        <div class="wwp-card-body">
-            <div class="wwp-field">
-                <label class="wwp-toggle">
-                    <input type="checkbox" name="show_widget" ' . checked($settings["show_widget"], "true", false) . '>
-                    إظهار ويدجت WhatsApp
-                </label>
-            </div>
+    '<div class="wwp-card">' +
+        '<div class="wwp-card-header">' +
+            '<h2>الإعدادات العامة</h2>' +
+        '</div>' +
+        '<div class="wwp-card-body">' +
+            '<div class="wwp-field">' +
+                '<label class="wwp-toggle">' +
+                    '<input type="checkbox" name="show_widget" <?php checked($settings["show_widget"], "true"); ?>>' +
+                    'إظهار ويدجت WhatsApp' +
+                '</label>' +
+            '</div>' +
             
-            <div class="wwp-field">
-                <label for="welcome_message">رسالة الترحيب</label>
-                <textarea name="welcome_message" id="welcome_message" rows="3">' . esc_textarea($settings["welcome_message"]) . '</textarea>
-            </div>
+            '<div class="wwp-field">' +
+                '<label for="welcome_message">رسالة الترحيب</label>' +
+                '<textarea name="welcome_message" id="welcome_message" rows="3"><?php echo esc_textarea($settings["welcome_message"]); ?></textarea>' +
+            '</div>' +
             
-            <div class="wwp-field">
-                <label for="widget_position">موقع الزر</label>
-                <select name="widget_position" id="widget_position">
-                    <option value="bottom-right" ' . selected($settings["widget_position"], "bottom-right", false) . '>أسفل يمين</option>
-                    <option value="bottom-left" ' . selected($settings["widget_position"], "bottom-left", false) . '>أسفل يسار</option>
-                </select>
-            </div>
+            '<div class="wwp-field">' +
+                '<label for="widget_position">موقع الزر</label>' +
+                '<select name="widget_position" id="widget_position">' +
+                    '<option value="bottom-right" <?php selected($settings["widget_position"], "bottom-right"); ?>>أسفل يمين</option>' +
+                    '<option value="bottom-left" <?php selected($settings["widget_position"], "bottom-left"); ?>>أسفل يسار</option>' +
+                '</select>' +
+            '</div>' +
             
-            <div class="wwp-field">
-                <label for="widget_color">لون الزر</label>
-                <input type="color" name="widget_color" id="widget_color" value="' . esc_attr($settings["widget_color"]) . '">
-            </div>
+            '<div class="wwp-field">' +
+                '<label for="widget_color">لون الزر</label>' +
+                '<input type="color" name="widget_color" id="widget_color" value="<?php echo esc_attr($settings["widget_color"]); ?>">' +
+            '</div>' +
             
-            <button type="button" class="button button-primary wwp-save-btn">حفظ الإعدادات</button>
-        </div>
-    </div>
+            '<button type="button" class="button button-primary wwp-save-btn">حفظ الإعدادات</button>' +
+        '</div>' +
+    '</div>' +
     
-    <div class="wwp-card">
-        <div class="wwp-card-header">
-            <h2>إدارة الفريق</h2>
-            <button type="button" class="button button-primary wwp-add-member">إضافة عضو جديد</button>
-        </div>
-        <div class="wwp-card-body">';
-        
-        $output = '<div class="wwp-team-list">';
-        
-        if (!empty($team_members)) {
-            foreach ($team_members as $member) {
-                $output .= '<div class="wwp-team-member" data-id="' . esc_attr($member->id) . '">
-                        <div class="wwp-member-info">
-                            <h4>' . esc_html($member->name) . '</h4>
-                            <p>' . esc_html($member->department) . '</p>
-                            <p class="wwp-phone">' . esc_html($member->phone) . '</p>
-                        </div>
-                    </div>';
-            }
-        } else {
-            $output .= '<p>لا توجد أعضاء فريق حالياً.</p>';
-        }
-        
-        $output .= '</div>
-        </div>
-    </div>
+    '<div class="wwp-card">' +
+        '<div class="wwp-card-header">' +
+            '<h2>إدارة الفريق</h2>' +
+            '<button type="button" class="button button-primary wwp-add-member">إضافة عضو جديد</button>' +
+        '</div>' +
+        '<div class="wwp-card-body">' +
+            '<div class="wwp-team-list">' +
+                '<?php if (!empty($team_members)): ?>' +
+                    '<?php foreach ($team_members as $member): ?>' +
+                        '<div class="wwp-team-member" data-id="<?php echo esc_attr($member->id); ?>">' +
+                            '<div class="wwp-member-info">' +
+                                '<h4><?php echo esc_html($member->name); ?></h4>' +
+                                '<p><?php echo esc_html($member->department); ?></p>' +
+                                '<p class="wwp-phone"><?php echo esc_html($member->phone); ?></p>' +
+                            '</div>' +
+                        '</div>' +
+                    '<?php endforeach; ?>' +
+                '<?php else: ?>' +
+                    '<p>لا توجد أعضاء فريق حالياً.</p>' +
+                '<?php endif; ?>' +
+            '</div>' +
+        '</div>' +
+    '</div>' +
     
-    <div class="wwp-stats-cards">
-        <div class="wwp-stat-card">
-            <h3>' . number_format($stats["total_clicks"]) . '</h3>
-            <p>إجمالي النقرات (30 يوم)</p>
-        </div>
-        <div class="wwp-stat-card">
-            <h3>' . number_format($stats["total_conversations"]) . '</h3>
-            <p>إجمالي المحادثات (30 يوم)</p>
-        </div>
-    </div>
-</div>';
-        
-        return $output;
+    '<div class="wwp-stats-cards">' +
+        '<div class="wwp-stat-card">' +
+            '<h3><?php echo number_format($stats["total_clicks"]); ?></h3>' +
+            '<p>إجمالي النقرات (30 يوم)</p>' +
+        '</div>' +
+        '<div class="wwp-stat-card">' +
+            '<h3><?php echo number_format($stats["total_conversations"]); ?></h3>' +
+            '<p>إجمالي المحادثات (30 يوم)</p>' +
+        '</div>' +
+    '</div>' +
+'</div>';
     }
     
     // قالب الويدجت
     private function get_widget_template() {
-        return '<?php
-$settings = $this->get_settings();
-$team_members = $this->get_team_members();
-$available_members = array_filter($team_members, function($member) {
-    return $member->status === "online";
-});
-?>
+        return '<?php' +
+'$settings = $this->get_settings();' +
+'$team_members = $this->get_team_members();' +
+'$available_members = array_filter($team_members, function($member) {' +
+    'return $member->status === "online";' +
+'});' +
+'?>' +
 
-<div id="wwp-widget" class="wwp-widget ' . esc_attr($settings["widget_position"]) . '" style="--widget-color: ' . esc_attr($settings["widget_color"]) . '">
-    <div class="wwp-widget-button" id="wwp-toggle-chat">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.488"/>
-        </svg>
-    </div>
+'<div id="wwp-widget" class="wwp-widget <?php echo esc_attr($settings["widget_position"]); ?>" style="--widget-color: <?php echo esc_attr($settings["widget_color"]); ?>">' +
+    '<div class="wwp-widget-button" id="wwp-toggle-chat">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">' +
+            '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.488"/>' +
+        '</svg>' +
+    '</div>' +
     
-    <div class="wwp-chat-window" id="wwp-chat-window">
-        <div class="wwp-chat-header">
-            <div class="wwp-header-info">
-                <h3>خدمة العملاء</h3>
-                <p>نحن هنا لمساعدتك</p>
-            </div>
-            <button class="wwp-close-chat" id="wwp-close-chat">×</button>
-        </div>
+    '<div class="wwp-chat-window" id="wwp-chat-window">' +
+        '<div class="wwp-chat-header">' +
+            '<div class="wwp-header-info">' +
+                '<h3>خدمة العملاء</h3>' +
+                '<p>نحن هنا لمساعدتك</p>' +
+            '</div>' +
+            '<button class="wwp-close-chat" id="wwp-close-chat">×</button>' +
+        '</div>' +
         
-        <div class="wwp-chat-body">
-            <div class="wwp-welcome-message">
-                <p>' . esc_html($settings["welcome_message"]) . '</p>
-            </div>';
+        '<div class="wwp-chat-body">' +
+            '<div class="wwp-welcome-message">' +
+                '<p><?php echo esc_html($settings["welcome_message"]); ?></p>' +
+            '</div>' +
             
-        $output = '';
-        if (!empty($available_members)) {
-            $output .= '<div class="wwp-team-list">
-                <h4>اختر الشخص المناسب للتحدث معه:</h4>';
-            
-            foreach ($available_members as $member) {
-                $avatar_initial = mb_substr($member->name, 0, 1);
-                $output .= '<div class="wwp-team-member-item" 
-                     data-phone="' . esc_attr($member->phone) . '" 
-                     data-name="' . esc_attr($member->name) . '"
-                     data-member-id="' . esc_attr($member->id) . '">
-                    <div class="wwp-member-avatar">';
-                
-                if (!empty($member->avatar)) {
-                    $output .= '<img src="' . esc_url($member->avatar) . '" alt="' . esc_attr($member->name) . '">';
-                } else {
-                    $output .= '<div class="wwp-avatar-placeholder">' . $avatar_initial . '</div>';
-                }
-                
-                $output .= '<span class="wwp-status-online"></span>
-                    </div>
-                    <div class="wwp-member-details">
-                        <h5>' . esc_html($member->name) . '</h5>
-                        <p>' . esc_html($member->department) . '</p>
-                    </div>
-                    <div class="wwp-chat-button">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
-                        </svg>
-                    </div>
-                </div>';
-            }
-            
-            $output .= '</div>';
-        } else {
-            $output .= '<div class="wwp-no-agents">
-                <p>عذراً، لا يوجد ممثلين متاحين حالياً. يرجى المحاولة لاحقاً.</p>
-            </div>';
-        }
-        
-        $output .= '</div>
-    </div>
-</div>';
-        
-        return $output;
+            '<?php if (!empty($available_members)): ?>' +
+                '<div class="wwp-team-list">' +
+                    '<h4>اختر الشخص المناسب للتحدث معه:</h4>' +
+                    '<?php foreach ($available_members as $member): ?>' +
+                        '<?php $avatar_initial = mb_substr($member->name, 0, 1); ?>' +
+                        '<div class="wwp-team-member-item" ' +
+                             'data-phone="<?php echo esc_attr($member->phone); ?>" ' +
+                             'data-name="<?php echo esc_attr($member->name); ?>"' +
+                             'data-member-id="<?php echo esc_attr($member->id); ?>">' +
+                            '<div class="wwp-member-avatar">' +
+                                '<?php if (!empty($member->avatar)): ?>' +
+                                    '<img src="<?php echo esc_url($member->avatar); ?>" alt="<?php echo esc_attr($member->name); ?>">' +
+                                '<?php else: ?>' +
+                                    '<div class="wwp-avatar-placeholder"><?php echo $avatar_initial; ?></div>' +
+                                '<?php endif; ?>' +
+                                '<span class="wwp-status-online"></span>' +
+                            '</div>' +
+                            '<div class="wwp-member-details">' +
+                                '<h5><?php echo esc_html($member->name); ?></h5>' +
+                                '<p><?php echo esc_html($member->department); ?></p>' +
+                            '</div>' +
+                            '<div class="wwp-chat-button">' +
+                                '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">' +
+                                    '<path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>' +
+                                '</svg>' +
+                            '</div>' +
+                        '</div>' +
+                    '<?php endforeach; ?>' +
+                '</div>' +
+            '<?php else: ?>' +
+                '<div class="wwp-no-agents">' +
+                    '<p>عذراً، لا يوجد ممثلين متاحين حالياً. يرجى المحاولة لاحقاً.</p>' +
+                '</div>' +
+            '<?php endif; ?>' +
+        '</div>' +
+    '</div>' +
+'</div>';
     }
 }
 
@@ -939,7 +920,7 @@ WhatsApp Widget Pro هي إضافة احترافية لووردبريس تتيح
     const url = window.URL.createObjectURL(content);
     const a = document.createElement("a");
     a.href = url;
-    a.download = \`whatsapp-widget-pro-v\${customVersion}.zip\`;
+    a.download = `whatsapp-widget-pro-v${customVersion}.zip`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
