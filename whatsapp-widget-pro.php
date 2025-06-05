@@ -642,7 +642,7 @@ class WhatsAppWidgetPro {
     
     // قالب صفحة الإدارة
     private function get_admin_page_template() {
-        return '<?php
+        $template = '<?php
 if (!defined("ABSPATH")) {
     exit;
 }
@@ -720,11 +720,13 @@ if (!defined("ABSPATH")) {
         </div>
     </div>
 </div>';
+        
+        return $template;
     }
     
     // قالب الويدجت
     private function get_widget_template() {
-        return '<?php
+        $template = '<?php
 $settings = $this->get_settings();
 $team_members = $this->get_team_members();
 $available_members = array_filter($team_members, function($member) {
@@ -790,6 +792,8 @@ $available_members = array_filter($team_members, function($member) {
         </div>
     </div>
 </div>';
+        
+        return $template;
     }
 }
 
