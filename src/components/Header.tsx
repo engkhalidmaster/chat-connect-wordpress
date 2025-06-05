@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Shield, PackageOpen } from 'lucide-react';
@@ -949,3 +950,175 @@ class WhatsAppWidgetPro {
 
 // تشغيل الإضافة
 new WhatsAppWidgetPro();
+?>`;
+
+      // إنشاء ملفات التقالب المطلوبة
+      const widgetTemplate = `<?php
+// قالب عرض الويدجت
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+$settings = get_option('wwp_settings', array());
+$team_members = $this->get_active_team_members();
+?>
+
+<div id="wwp-widget" class="wwp-widget <?php echo esc_attr($settings['widget_position'] ?? 'bottom-right'); ?>" style="--widget-color: <?php echo esc_attr($settings['widget_color'] ?? '#25D366'); ?>">
+    <div class="wwp-widget-button" id="wwp-toggle-chat">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.488"/>
+        </svg>
+    </div>
+    
+    <div class="wwp-chat-window" id="wwp-chat-window">
+        <div class="wwp-chat-header">
+            <div class="wwp-header-info">
+                <h3>خدمة العملاء</h3>
+                <p>نحن هنا لمساعدتك</p>
+            </div>
+            <button class="wwp-close-chat" id="wwp-close-chat">×</button>
+        </div>
+        
+        <div class="wwp-chat-body">
+            <div class="wwp-welcome-message">
+                <p><?php echo esc_html($settings['welcome_message'] ?? 'مرحباً! كيف يمكنني مساعدتك؟'); ?></p>
+            </div>
+            
+            <?php if (!empty($team_members)): ?>
+            <div class="wwp-team-list">
+                <h4>اختر الشخص المناسب للتحدث معه:</h4>
+                <?php foreach ($team_members as $member): ?>
+                <div class="wwp-team-member-item" 
+                     data-phone="<?php echo esc_attr($member->phone); ?>" 
+                     data-name="<?php echo esc_attr($member->name); ?>"
+                     data-member-id="<?php echo esc_attr($member->id); ?>">
+                    <div class="wwp-member-avatar">
+                        <div class="wwp-avatar-placeholder"><?php echo mb_substr($member->name, 0, 1); ?></div>
+                        <span class="wwp-status-online"></span>
+                    </div>
+                    <div class="wwp-member-details">
+                        <h5><?php echo esc_html($member->name); ?></h5>
+                        <p><?php echo esc_html($member->department); ?></p>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+            <div class="wwp-no-agents">
+                <p>عذراً، لا يوجد ممثلين متاحين حالياً. يرجى المحاولة لاحقاً.</p>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>`;
+
+      // إضافة الملفات إلى ZIP
+      zip.file('whatsapp-widget-pro.php', mainPluginContent);
+      zip.file('templates/widget.php', widgetTemplate);
+      zip.file('readme.txt', `=== WhatsApp Widget Pro ===
+Contributors: whatsappwidgetpro
+Tags: whatsapp, chat, widget, customer service
+Requires at least: 5.0
+Tested up to: 6.4
+Stable tag: 1.0.4
+License: GPL2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+إضافة احترافية لعرض زر WhatsApp مع تتبع Google Analytics ولوحة تحكم شاملة
+
+== Description ==
+
+WhatsApp Widget Pro هي إضافة احترافية تتيح لك إضافة زر WhatsApp إلى موقعك الإلكتروني بسهولة.
+
+== Installation ==
+
+1. ارفع ملف الإضافة إلى مجلد /wp-content/plugins/
+2. فعل الإضافة من لوحة تحكم ووردبريس
+3. اذهب إلى WhatsApp Widget لضبط الإعدادات
+
+== Changelog ==
+
+= 1.0.4 =
+* إصدار أولي`);
+
+      // إنشاء ملف ZIP وتحميله
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `whatsapp-widget-pro-v1.0.4.zip`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "تم تحميل الإضافة بنجاح",
+        description: "تم إنشاء ملف ZIP كامل للإضافة مع جميع الملفات المطلوبة",
+      });
+      
+    } catch (error) {
+      console.error('خطأ في تحميل الإضافة:', error);
+      toast({
+        title: "خطأ في التحميل",
+        description: "حدث خطأ أثناء إنشاء ملف الإضافة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">WhatsApp Widget Pro</h1>
+        <p className="text-gray-600">لوحة تحكم شاملة لإدارة ويدجت WhatsApp</p>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={handleSaveSettings}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          حفظ الإعدادات
+        </Button>
+        
+        <Button
+          onClick={handleBackup}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Shield className="w-4 h-4" />
+          نسخة احتياطية
+        </Button>
+        
+        <Button
+          onClick={handleRestoreBackup}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <PackageOpen className="w-4 h-4" />
+          استعادة النسخة
+        </Button>
+        
+        <Button
+          onClick={handleDownloadPlugin}
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          size="sm"
+        >
+          <Download className="w-4 h-4" />
+          تحميل الإضافة الكاملة
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Header;
