@@ -1,20 +1,25 @@
 
+/* الأنماط الأساسية */
 .wwp-admin-wrap {
-    direction: rtl;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f1f1f1;
+    margin: 0 0 0 -20px;
+    min-height: 100vh;
 }
 
+/* الهيدر */
 .wwp-header {
-    background: #fff;
-    border-bottom: 1px solid #ccd0d4;
-    margin: 0 -20px 20px -20px;
-    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    padding: 20px 30px;
+    margin-bottom: 0;
 }
 
 .wwp-header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 1200px;
 }
 
 .wwp-logo {
@@ -24,73 +29,87 @@
 }
 
 .wwp-logo-icon {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     background: #25D366;
-    color: white;
-    border-radius: 50%;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
 }
 
-.wwp-header-title h1 {
+.wwp-header h1 {
     margin: 0;
-    color: #1d2327;
-    font-size: 28px;
+    font-size: 24px;
+    color: #23282d;
 }
 
 .wwp-subtitle {
     margin: 5px 0 0 0;
-    color: #646970;
+    color: #666;
     font-size: 14px;
 }
 
-.wwp-main-content {
+.wwp-header-actions {
     display: flex;
-    gap: 20px;
+    gap: 10px;
 }
 
+/* المحتوى الرئيسي */
+.wwp-main-content {
+    display: flex;
+    max-width: 1200px;
+    background: white;
+    margin: 0 auto;
+    min-height: calc(100vh - 120px);
+}
+
+/* الشريط الجانبي */
 .wwp-sidebar {
-    width: 250px;
-    flex-shrink: 0;
+    width: 280px;
+    background: #fafafa;
+    border-left: 1px solid #ddd;
+    padding: 20px 0;
 }
 
 .wwp-nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
 }
 
 .wwp-nav li {
-    border-bottom: 1px solid #ccd0d4;
-}
-
-.wwp-nav li:last-child {
-    border-bottom: none;
+    margin: 0;
 }
 
 .wwp-nav-link {
     display: block;
-    padding: 15px 20px;
+    padding: 15px 25px;
+    color: #666;
     text-decoration: none;
-    color: #646970;
-    cursor: pointer;
-    transition: all 0.2s;
+    border-right: 3px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 14px;
 }
 
-.wwp-nav-link:hover,
+.wwp-nav-link:hover {
+    background: #f0f0f0;
+    color: #0073aa;
+}
+
 .wwp-nav-link.active {
-    background: #2271b1;
-    color: #fff;
+    background: #e6f3ff;
+    color: #0073aa;
+    border-right-color: #0073aa;
 }
 
+/* المحتوى */
 .wwp-content {
     flex: 1;
+    padding: 30px;
 }
 
 .wwp-tab-content {
@@ -101,26 +120,43 @@
     display: block;
 }
 
+.wwp-section h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #23282d;
+}
+
+.wwp-section .description {
+    margin: 0 0 20px 0;
+    color: #666;
+}
+
+/* البطاقات */
 .wwp-card {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    margin: 20px 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
 }
 
 .wwp-card-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #ccd0d4;
-    background: #f6f7f7;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+}
+
+.wwp-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #23282d;
 }
 
 .wwp-card-body {
     padding: 20px;
 }
 
+/* الحقول */
 .wwp-field {
     margin-bottom: 20px;
 }
@@ -129,7 +165,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #1d2327;
+    color: #23282d;
 }
 
 .wwp-field input[type="text"],
@@ -137,12 +173,18 @@
 .wwp-field select,
 .wwp-field textarea {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #8c8f94;
+    padding: 10px;
+    border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
 }
 
+.wwp-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* المفاتيح */
 .wwp-toggle {
     display: flex;
     align-items: center;
@@ -155,89 +197,160 @@
 }
 
 .wwp-toggle-slider {
-    width: 40px;
-    height: 20px;
+    width: 50px;
+    height: 24px;
     background: #ccc;
-    border-radius: 20px;
+    border-radius: 12px;
     position: relative;
-    transition: 0.3s;
+    transition: background 0.3s ease;
 }
 
 .wwp-toggle-slider:before {
-    content: "";
+    content: '';
     position: absolute;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+    width: 20px;
+    height: 20px;
     background: white;
+    border-radius: 50%;
     top: 2px;
     right: 2px;
-    transition: 0.3s;
+    transition: transform 0.3s ease;
 }
 
-.wwp-toggle input:checked + .wwp-toggle-slider {
+.wwp-toggle input[type="checkbox"]:checked + .wwp-toggle-slider {
     background: #25D366;
 }
 
-.wwp-toggle input:checked + .wwp-toggle-slider:before {
-    transform: translateX(-20px);
+.wwp-toggle input[type="checkbox"]:checked + .wwp-toggle-slider:before {
+    transform: translateX(-26px);
+}
+
+/* قائمة الفريق */
+.wwp-team-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .wwp-team-member {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 15px;
     padding: 15px;
-    border: 1px solid #ddd;
-    margin: 10px 0;
-    border-radius: 5px;
-    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.wwp-member-avatar {
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+
+.wwp-member-avatar img,
+.wwp-avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wwp-avatar-placeholder {
+    background: #25D366;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.wwp-status-indicator {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.wwp-status-indicator.online {
+    background: #4CAF50;
+}
+
+.wwp-status-indicator.away {
+    background: #FF9800;
+}
+
+.wwp-status-indicator.offline {
+    background: #9E9E9E;
+}
+
+.wwp-member-info {
+    flex: 1;
 }
 
 .wwp-member-info h4 {
     margin: 0 0 5px 0;
-    color: #1d2327;
+    font-size: 16px;
+    color: #23282d;
 }
 
 .wwp-member-info p {
     margin: 0;
-    color: #646970;
-    font-size: 13px;
+    color: #666;
+    font-size: 14px;
 }
 
 .wwp-phone {
+    font-family: monospace;
     direction: ltr;
-    text-align: right;
+    text-align: left;
 }
 
+.wwp-member-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* بطاقات الإحصائيات */
 .wwp-stats-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
-    margin: 20px 0;
+    margin-bottom: 30px;
 }
 
 .wwp-stat-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
+    background: white;
     border: 1px solid #ddd;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.wwp-stat-card h3 {
-    margin: 0 0 10px 0;
+.wwp-stat-icon {
     font-size: 32px;
-    color: #25D366;
+    opacity: 0.8;
 }
 
-.wwp-stat-card p {
+.wwp-stat-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+    color: #23282d;
+}
+
+.wwp-stat-content p {
     margin: 0;
-    color: #646970;
+    color: #666;
     font-size: 14px;
 }
 
+/* تحسينات الاستجابة */
 @media (max-width: 768px) {
     .wwp-main-content {
         flex-direction: column;
@@ -250,6 +363,9 @@
     .wwp-header-content {
         flex-direction: column;
         gap: 15px;
-        text-align: center;
+    }
+    
+    .wwp-stats-cards {
+        grid-template-columns: 1fr;
     }
 }
