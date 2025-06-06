@@ -29,9 +29,9 @@ jQuery(document).ready(function($) {
         // فتح WhatsApp
         var whatsappUrl = 'https://wa.me/' + memberPhone.replace(/[^0-9]/g, '') + '?text=' + message;
         
-        // تتبع النقرة في Google Analytics
+        // تتبع بدء المحادثة في Google Analytics
         if (wwp_settings.enable_analytics && typeof gtag !== 'undefined') {
-            gtag('event', 'whatsapp_click', {
+            gtag('event', 'chat_started', {
                 'event_category': 'WhatsApp Widget',
                 'event_label': memberName,
                 'member_phone': memberPhone
@@ -53,6 +53,14 @@ jQuery(document).ready(function($) {
     function openChatWindow() {
         chatWindow.addClass('open');
         toggleButton.addClass('active');
+        
+        // تتبع فتح الويدجت في Google Analytics
+        if (wwp_settings.enable_analytics && typeof gtag !== 'undefined') {
+            gtag('event', 'widget_opened', {
+                'event_category': 'WhatsApp Widget',
+                'event_label': 'Chat Window Opened'
+            });
+        }
         
         // إيقاف التأثير المتحرك
         toggleButton.removeClass('bounce');

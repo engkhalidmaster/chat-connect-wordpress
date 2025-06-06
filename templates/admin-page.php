@@ -7,7 +7,7 @@
                     <div class="wwp-logo-icon">W</div>
                     <h1>WhatsApp Widget Pro</h1>
                 </div>
-                <p class="wwp-subtitle">نسخة أفضل مع Google Analytics. تأكد من إدخال معرف التتبع الصحيح وتفعيل النمودج.</p>
+                <p class="wwp-subtitle">إضافة احترافية لعرض زر WhatsApp مع تتبع Google Analytics ولوحة تحكم شاملة</p>
             </div>
             <div class="wwp-header-actions">
                 <button type="button" class="button button-secondary wwp-backup-btn">نسخة احتياطية</button>
@@ -22,9 +22,9 @@
                 <ul>
                     <li><a href="#general" class="wwp-nav-link active" data-tab="general">⚙️ الإعدادات العامة</a></li>
                     <li><a href="#team" class="wwp-nav-link" data-tab="team">👥 إدارة الفريق</a></li>
-                    <li><a href="#appearance" class="wwp-nav-link" data-tab="appearance">🎨 المظهر</a></li>
+                    <li><a href="#appearance" class="wwp-nav-link" data-tab="appearance">🎨 إعدادات المظهر</a></li>
                     <li><a href="#analytics" class="wwp-nav-link" data-tab="analytics">📊 إعدادات Google Analytics</a></li>
-                    <li><a href="#statistics" class="wwp-nav-link" data-tab="statistics">📈 إحصائيات الاستخدام (آخر 30 يوم)</a></li>
+                    <li><a href="#statistics" class="wwp-nav-link" data-tab="statistics">📈 إحصائيات الاستخدام</a></li>
                 </ul>
             </nav>
         </div>
@@ -94,16 +94,41 @@
                 </div>
             </div>
 
-            <!-- المظهر -->
+            <!-- إعدادات المظهر -->
             <div id="appearance-tab" class="wwp-tab-content">
                 <div class="wwp-section">
                     <h2>إعدادات المظهر</h2>
-                    <p class="description">تخصيص شكل وموقع زر WhatsApp</p>
+                    <p class="description">تخصيص مظهر زر WhatsApp</p>
                     
                     <div class="wwp-card">
+                        <div class="wwp-card-header">
+                            <h3>لون الويدجت</h3>
+                        </div>
+                        <div class="wwp-card-body">
+                            <div class="wwp-color-preview">
+                                <div class="wwp-color-sample" style="background-color: <?php echo esc_attr($settings['widget_color']); ?>"></div>
+                                <p>اللون الأساسي للويدجت</p>
+                            </div>
+                            <div class="wwp-color-palette">
+                                <button type="button" class="wwp-color-option" data-color="#25D366" style="background-color: #25D366" <?php echo ($settings['widget_color'] === '#25D366') ? 'class="active"' : ''; ?>></button>
+                                <button type="button" class="wwp-color-option" data-color="#0088CC" style="background-color: #0088CC" <?php echo ($settings['widget_color'] === '#0088CC') ? 'class="active"' : ''; ?>></button>
+                                <button type="button" class="wwp-color-option" data-color="#FF6B35" style="background-color: #FF6B35" <?php echo ($settings['widget_color'] === '#FF6B35') ? 'class="active"' : ''; ?>></button>
+                                <button type="button" class="wwp-color-option" data-color="#8B5CF6" style="background-color: #8B5CF6" <?php echo ($settings['widget_color'] === '#8B5CF6') ? 'class="active"' : ''; ?>></button>
+                            </div>
+                            <div class="wwp-field">
+                                <label for="widget_color">أو اختر لون مخصص</label>
+                                <input type="color" name="widget_color" id="widget_color" value="<?php echo esc_attr($settings['widget_color']); ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wwp-card">
+                        <div class="wwp-card-header">
+                            <h3>موقع الويدجت</h3>
+                        </div>
                         <div class="wwp-card-body">
                             <div class="wwp-field">
-                                <label for="widget_position">موقع الزر</label>
+                                <label for="widget_position">اختر موقع الزر على الشاشة</label>
                                 <select name="widget_position" id="widget_position">
                                     <option value="bottom-right" <?php selected($settings['widget_position'], 'bottom-right'); ?>>أسفل يمين</option>
                                     <option value="bottom-left" <?php selected($settings['widget_position'], 'bottom-left'); ?>>أسفل يسار</option>
@@ -111,34 +136,38 @@
                                     <option value="top-left" <?php selected($settings['widget_position'], 'top-left'); ?>>أعلى يسار</option>
                                 </select>
                             </div>
-                            <div class="wwp-field">
-                                <label for="widget_color">لون الزر</label>
-                                <input type="color" name="widget_color" id="widget_color" value="<?php echo esc_attr($settings['widget_color']); ?>">
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Google Analytics -->
+            <!-- إعدادات Google Analytics -->
             <div id="analytics-tab" class="wwp-tab-content">
                 <div class="wwp-section">
                     <h2>إعدادات Google Analytics</h2>
-                    <p class="description">ربط الإضافة مع Google Analytics لتتبع النقرات والمحادثات</p>
+                    <p class="description">تتبع إحصائيات استخدام زر WhatsApp</p>
                     
                     <div class="wwp-card">
+                        <div class="wwp-card-header">
+                            <label class="wwp-toggle">
+                                <input type="checkbox" name="enable_analytics" <?php checked($settings['enable_analytics']); ?>>
+                                <span class="wwp-toggle-slider"></span>
+                                تفعيل تتبع الأحداث في Google Analytics
+                            </label>
+                        </div>
                         <div class="wwp-card-body">
                             <div class="wwp-field">
-                                <label class="wwp-toggle">
-                                    <input type="checkbox" name="enable_analytics" <?php checked($settings['enable_analytics']); ?>>
-                                    <span class="wwp-toggle-slider"></span>
-                                    تفعيل تتبع Google Analytics
-                                </label>
+                                <label for="analytics_id">معرف التتبع</label>
+                                <input type="text" name="analytics_id" id="analytics_id" value="<?php echo esc_attr($settings['analytics_id']); ?>" placeholder="UA-XXXXXXXXX-X أو G-XXXXXXXXXX">
+                                <p class="description">معرف Google Analytics الخاص بموقعك</p>
                             </div>
-                            <div class="wwp-field">
-                                <label for="analytics_id">معرف التتبع (Tracking ID)</label>
-                                <input type="text" name="analytics_id" id="analytics_id" value="<?php echo esc_attr($settings['analytics_id']); ?>" placeholder="G-XXXXXXXXXX">
-                                <p class="description">أدخل معرف التتبع من Google Analytics</p>
+                            
+                            <div class="wwp-info-box">
+                                <h4>الأحداث المتتبعة:</h4>
+                                <ul>
+                                    <li><strong>widget_opened:</strong> عند فتح نافذة الدردشة</li>
+                                    <li><strong>chat_started:</strong> عند بدء محادثة مع أحد أعضاء الفريق</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -148,32 +177,46 @@
             <!-- الإحصائيات -->
             <div id="statistics-tab" class="wwp-tab-content">
                 <div class="wwp-section">
-                    <h2>إحصائيات الاستخدام</h2>
-                    <p class="description">إحصائيات النقرات والمحادثات خلال آخر 30 يوم</p>
+                    <h2>إحصائيات الاستخدام (آخر 30 يوم)</h2>
+                    <p class="description">بيانات شاملة عن أداء ويدجت WhatsApp</p>
                     
-                    <div class="wwp-stats-cards">
-                        <div class="wwp-stat-card">
-                            <div class="wwp-stat-icon">📱</div>
+                    <div class="wwp-stats-overview">
+                        <div class="wwp-stat-card orange">
                             <div class="wwp-stat-content">
-                                <h3><?php echo number_format($stats['total_clicks'] ?: 0); ?></h3>
-                                <p>إجمالي النقرات</p>
+                                <div class="wwp-stat-value"><?php echo $stats['total_clicks'] > 0 ? round(($stats['total_conversations'] / $stats['total_clicks']) * 100, 1) : 0; ?>%</div>
+                                <div class="wwp-stat-label">معدل التحويل</div>
                             </div>
                         </div>
-                        <div class="wwp-stat-card">
-                            <div class="wwp-stat-icon">💬</div>
+                        
+                        <div class="wwp-stat-card green">
                             <div class="wwp-stat-content">
-                                <h3><?php echo number_format($stats['total_conversations'] ?: 0); ?></h3>
-                                <p>إجمالي المحادثات</p>
+                                <div class="wwp-stat-value"><?php echo number_format($stats['total_conversations'] ?: 0); ?></div>
+                                <div class="wwp-stat-label">محادثة بدأت</div>
+                            </div>
+                        </div>
+                        
+                        <div class="wwp-stat-card blue">
+                            <div class="wwp-stat-content">
+                                <div class="wwp-stat-value"><?php echo number_format($stats['total_clicks'] ?: 0); ?></div>
+                                <div class="wwp-stat-label">فتح الويدجت</div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="wwp-card">
                         <div class="wwp-card-header">
-                            <h3>الإحصائيات اليومية</h3>
+                            <h3>إحصائيات مفصلة</h3>
                         </div>
                         <div class="wwp-card-body">
-                            <canvas id="wwp-stats-chart" width="400" height="200"></canvas>
+                            <?php if (!empty($stats['daily_stats']) && $stats['total_clicks'] > 0): ?>
+                                <canvas id="wwp-stats-chart" width="400" height="200"></canvas>
+                            <?php else: ?>
+                                <div class="wwp-no-data">
+                                    <div class="wwp-no-data-icon">📊</div>
+                                    <p>لا توجد بيانات كافية لعرض الإحصائيات</p>
+                                    <p class="description">ستظهر البيانات هنا بعد استخدام الويدجت</p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
