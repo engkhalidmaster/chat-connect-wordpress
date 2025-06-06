@@ -23,26 +23,43 @@ class WWP_Ajax {
     }
     
     public function save_settings() {
+        // تسجيل البيانات الواردة للتصحيح
+        error_log('WWP Save Settings - POST Data: ' . print_r($_POST, true));
+        
         // التحقق من الصلاحيات والأمان
         if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            error_log('WWP Save Settings - Nonce verification failed');
             wp_send_json_error('فشل في التحقق من الأمان');
         }
         
         if (!current_user_can('manage_options')) {
+            error_log('WWP Save Settings - User lacks permissions');
             wp_send_json_error('غير مصرح لك بهذا الإجراء');
         }
         
+        // تنظيف وحفظ الإعدادات
         $settings = array(
-            'show_widget' => sanitize_text_field($_POST['show_widget']),
-            'welcome_message' => sanitize_textarea_field($_POST['welcome_message']),
-            'widget_position' => sanitize_text_field($_POST['widget_position']),
-            'widget_color' => sanitize_hex_color($_POST['widget_color']),
-            'analytics_id' => sanitize_text_field($_POST['analytics_id']),
-            'enable_analytics' => sanitize_text_field($_POST['enable_analytics'])
+            'show_widget' => isset($_POST['show_widget']) ? sanitize_text_field($_POST['show_widget']) : '0',
+            'welcome_message' => isset($_POST['welcome_message']) ? sanitize_textarea_field($_POST['welcome_message']) : '',
+            'widget_position' => isset($_POST['widget_position']) ? sanitize_text_field($_POST['widget_position']) : 'bottom-right',
+            'widget_color' => isset($_POST['widget_color']) ? sanitize_hex_color($_POST['widget_color']) : '#25D366',
+            'analytics_id' => isset($_POST['analytics_id']) ? sanitize_text_field($_POST['analytics_id']) : '',
+            'enable_analytics' => isset($_POST['enable_analytics']) ? sanitize_text_field($_POST['enable_analytics']) : '0'
         );
         
-        update_option('wwp_settings', $settings);
-        wp_send_json_success('تم حفظ الإعدادات بنجاح');
+        // تسجيل الإعدادات المُعالجة
+        error_log('WWP Save Settings - Processed Settings: ' . print_r($settings, true));
+        
+        // حفظ الإعدادات
+        $result = update_option('wwp_settings', $settings);
+        
+        if ($result !== false) {
+            error_log('WWP Save Settings - Settings saved successfully');
+            wp_send_json_success('تم حفظ الإعدادات بنجاح');
+        } else {
+            error_log('WWP Save Settings - Failed to save settings');
+            wp_send_json_error('فشل في حفظ الإعدادات');
+        }
     }
     
     public function record_click() {

@@ -23,14 +23,12 @@ class WhatsAppWidgetPro {
     
     public function __construct() {
         add_action('init', array($this, 'init'));
-        add_action('wp_ajax_wwp_save_settings', array($this, 'save_settings'));
-        add_action('wp_ajax_wwp_record_click', array($this, 'record_click'));
-        add_action('wp_ajax_wwp_add_member', array($this, 'add_member'));
-        add_action('wp_ajax_wwp_edit_member', array($this, 'edit_member'));
-        add_action('wp_ajax_wwp_delete_member', array($this, 'delete_member'));
         
         // إنشاء جداول قاعدة البيانات عند التفعيل
         register_activation_hook(__FILE__, array($this, 'create_tables'));
+        
+        // تحميل فئات AJAX
+        add_action('init', array($this, 'load_ajax_handlers'));
     }
     
     public function init() {
@@ -46,6 +44,11 @@ class WhatsAppWidgetPro {
         
         // عرض الويدجت في الموقع
         add_action('wp_footer', array($this, 'display_widget'));
+    }
+    
+    public function load_ajax_handlers() {
+        // تحميل فئة AJAX
+        require_once WWP_PLUGIN_PATH . 'includes/class-wwp-ajax.php';
     }
     
     public function add_admin_menu() {
@@ -68,6 +71,7 @@ class WhatsAppWidgetPro {
         wp_enqueue_style('wwp-admin-style', WWP_PLUGIN_URL . 'assets/admin-style.css', array(), WWP_VERSION);
         wp_enqueue_script('wwp-admin-script', WWP_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), WWP_VERSION, true);
         
+        // التأكد من تمرير البيانات بشكل صحيح
         wp_localize_script('wwp-admin-script', 'wwp_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('wwp_nonce')
@@ -102,144 +106,6 @@ class WhatsAppWidgetPro {
         }
         
         include WWP_PLUGIN_PATH . 'templates/widget.php';
-    }
-    
-    public function save_settings() {
-        // التحقق من الصلاحيات والأمان
-        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
-            wp_send_json_error('فشل في التحقق من الأمان');
-            return;
-        }
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('غير مصرح لك بهذا الإجراء');
-            return;
-        }
-        
-        $settings = array(
-            'show_widget' => sanitize_text_field($_POST['show_widget']),
-            'welcome_message' => sanitize_textarea_field($_POST['welcome_message']),
-            'widget_position' => sanitize_text_field($_POST['widget_position']),
-            'widget_color' => sanitize_hex_color($_POST['widget_color']),
-            'analytics_id' => sanitize_text_field($_POST['analytics_id']),
-            'enable_analytics' => sanitize_text_field($_POST['enable_analytics'])
-        );
-        
-        update_option('wwp_settings', $settings);
-        wp_send_json_success('تم حفظ الإعدادات بنجاح');
-    }
-    
-    public function record_click() {
-        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
-            wp_send_json_error('فشل في التحقق من الأمان');
-            return;
-        }
-        
-        global $wpdb;
-        $member_id = intval($_POST['member_id']);
-        $today = current_time('Y-m-d');
-        
-        // تحديث أو إدراج إحصائيات اليوم
-        $wpdb->query($wpdb->prepare(
-            "INSERT INTO {$wpdb->prefix}wwp_stats (date, clicks, member_id) 
-             VALUES (%s, 1, %d) 
-             ON DUPLICATE KEY UPDATE clicks = clicks + 1",
-            $today, $member_id
-        ));
-        
-        wp_send_json_success('تم تسجيل النقرة');
-    }
-    
-    public function add_member() {
-        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
-            wp_send_json_error('فشل في التحقق من الأمان');
-            return;
-        }
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('غير مصرح لك بهذا الإجراء');
-            return;
-        }
-        
-        global $wpdb;
-        
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'wwp_team_members',
-            array(
-                'name' => sanitize_text_field($_POST['name']),
-                'phone' => sanitize_text_field($_POST['phone']),
-                'department' => sanitize_text_field($_POST['department']),
-                'status' => sanitize_text_field($_POST['status']),
-                'display_order' => intval($_POST['display_order'])
-            ),
-            array('%s', '%s', '%s', '%s', '%d')
-        );
-        
-        if ($result) {
-            wp_send_json_success('تم إضافة العضو بنجاح');
-        } else {
-            wp_send_json_error('حدث خطأ أثناء إضافة العضو');
-        }
-    }
-    
-    public function edit_member() {
-        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
-            wp_send_json_error('فشل في التحقق من الأمان');
-            return;
-        }
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('غير مصرح لك بهذا الإجراء');
-            return;
-        }
-        
-        global $wpdb;
-        
-        $result = $wpdb->update(
-            $wpdb->prefix . 'wwp_team_members',
-            array(
-                'name' => sanitize_text_field($_POST['name']),
-                'phone' => sanitize_text_field($_POST['phone']),
-                'department' => sanitize_text_field($_POST['department']),
-                'status' => sanitize_text_field($_POST['status']),
-                'display_order' => intval($_POST['display_order'])
-            ),
-            array('id' => intval($_POST['member_id'])),
-            array('%s', '%s', '%s', '%s', '%d'),
-            array('%d')
-        );
-        
-        if ($result !== false) {
-            wp_send_json_success('تم تحديث بيانات العضو بنجاح');
-        } else {
-            wp_send_json_error('حدث خطأ أثناء تحديث بيانات العضو');
-        }
-    }
-    
-    public function delete_member() {
-        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
-            wp_send_json_error('فشل في التحقق من الأمان');
-            return;
-        }
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('غير مصرح لك بهذا الإجراء');
-            return;
-        }
-        
-        global $wpdb;
-        
-        $result = $wpdb->delete(
-            $wpdb->prefix . 'wwp_team_members',
-            array('id' => intval($_POST['member_id'])),
-            array('%d')
-        );
-        
-        if ($result) {
-            wp_send_json_success('تم حذف العضو بنجاح');
-        } else {
-            wp_send_json_error('حدث خطأ أثناء حذف العضو');
-        }
     }
     
     public function get_settings() {

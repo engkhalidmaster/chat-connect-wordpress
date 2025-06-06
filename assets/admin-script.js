@@ -1,3 +1,4 @@
+
 jQuery(document).ready(function($) {
     
     // Tab Navigation
@@ -72,18 +73,30 @@ jQuery(document).ready(function($) {
         $('.wwp-color-option[data-color="' + selectedColor + '"]').addClass('active');
     });
     
-    // حفظ الإعدادات
+    // حفظ الإعدادات - إصلاح المشكلة
     $('.wwp-save-btn').on('click', function() {
+        console.log('تم النقر على زر حفظ الإعدادات');
+        
+        // التحقق من وجود wwp_ajax
+        if (typeof wwp_ajax === 'undefined') {
+            console.error('wwp_ajax غير متوفر');
+            showNotice('خطأ: البيانات المطلوبة غير متوفرة', 'error');
+            return;
+        }
+        
+        // جمع جميع الإعدادات
         var settings = {
             action: 'wwp_save_settings',
             nonce: wwp_ajax.nonce,
-            show_widget: $('input[name="show_widget"]').is(':checked') ? 1 : 0,
-            welcome_message: $('textarea[name="welcome_message"]').val(),
-            widget_position: $('select[name="widget_position"]').val(),
-            widget_color: $('input[name="widget_color"]').val(),
-            analytics_id: $('input[name="analytics_id"]').val(),
-            enable_analytics: $('input[name="enable_analytics"]').is(':checked') ? 1 : 0
+            show_widget: $('input[name="show_widget"]').is(':checked') ? '1' : '0',
+            welcome_message: $('textarea[name="welcome_message"]').val() || '',
+            widget_position: $('select[name="widget_position"]').val() || 'bottom-right',
+            widget_color: $('input[name="widget_color"]').val() || '#25D366',
+            analytics_id: $('input[name="analytics_id"]').val() || '',
+            enable_analytics: $('input[name="enable_analytics"]').is(':checked') ? '1' : '0'
         };
+        
+        console.log('البيانات المُرسلة:', settings);
         
         $.ajax({
             url: wwp_ajax.ajax_url,
@@ -91,19 +104,25 @@ jQuery(document).ready(function($) {
             data: settings,
             beforeSend: function() {
                 $('.wwp-save-btn').prop('disabled', true).text('جاري الحفظ...');
+                console.log('بدء إرسال البيانات');
             },
             success: function(response) {
+                console.log('الاستجابة:', response);
                 if (response.success) {
                     showNotice('تم حفظ الإعدادات بنجاح', 'success');
                 } else {
-                    showNotice(response.data || 'حدث خطأ أثناء الحفظ', 'error');
+                    var errorMessage = response.data || 'حدث خطأ أثناء الحفظ';
+                    console.error('خطأ في الحفظ:', errorMessage);
+                    showNotice(errorMessage, 'error');
                 }
             },
-            error: function() {
-                showNotice('حدث خطأ في الاتصال', 'error');
+            error: function(xhr, status, error) {
+                console.error('خطأ AJAX:', {xhr: xhr, status: status, error: error});
+                showNotice('حدث خطأ في الاتصال: ' + error, 'error');
             },
             complete: function() {
                 $('.wwp-save-btn').prop('disabled', false).text('حفظ الإعدادات');
+                console.log('انتهى طلب AJAX');
             }
         });
     });
@@ -140,4 +159,10 @@ jQuery(document).ready(function($) {
             }
         });
     });
+    
+    // التحقق من تحميل wwp_ajax عند تحميل الصفحة
+    console.log('wwp_ajax متوفر:', typeof wwp_ajax !== 'undefined');
+    if (typeof wwp_ajax !== 'undefined') {
+        console.log('wwp_ajax البيانات:', wwp_ajax);
+    }
 });
