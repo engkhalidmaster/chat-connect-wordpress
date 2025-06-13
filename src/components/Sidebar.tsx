@@ -15,11 +15,13 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: 'analytics', label: 'إعدادات Google Analytics', icon: '📊' },
     { id: 'woocommerce', label: 'تكامل WooCommerce', icon: '🛒' },
     { id: 'security', label: 'إعدادات الأمان', icon: '🔒' },
-    { id: 'statistics', label: 'إحصائيات الاستخدام (آخر 30 يوم)', icon: '📈' },
+    { id: 'statistics', label: 'إحصائيات الاستخدام', icon: '📈' },
   ];
 
+  console.log('Current activeTab:', activeTab); // للتأكد من القيمة الحالية
+
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+    <div className="w-80 bg-white border-l border-gray-200 flex flex-col min-h-screen">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
@@ -34,16 +36,19 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           {menuItems.map((item) => (
             <li key={item.id}>
               <button
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  console.log('Clicking on:', item.id); // للتأكد من النقر
+                  setActiveTab(item.id);
+                }}
                 className={cn(
-                  "w-full text-right p-3 rounded-lg transition-colors flex items-center gap-3",
+                  "w-full text-right p-3 rounded-lg transition-colors flex items-center gap-3 hover:bg-gray-50",
                   activeTab === item.id
-                    ? "bg-blue-50 text-blue-700 border border-blue-200"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-green-50 text-green-700 border border-green-200 font-medium"
+                    : "text-gray-700"
                 )}
               >
                 <span className="text-lg">{item.icon}</span>
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-sm">{item.label}</span>
               </button>
             </li>
           ))}
