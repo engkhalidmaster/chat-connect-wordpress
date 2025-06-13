@@ -11,8 +11,10 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const menuItems = [
     { id: 'general', label: 'الإعدادات العامة', icon: '⚙️' },
     { id: 'team', label: 'إدارة الفريق', icon: '👥' },
-    { id: 'appearance', label: 'المظهر', icon: '🎨' },
+    { id: 'appearance', label: 'إعدادات المظهر', icon: '🎨' },
     { id: 'analytics', label: 'إعدادات Google Analytics', icon: '📊' },
+    { id: 'woocommerce', label: 'تكامل WooCommerce', icon: '🛒' },
+    { id: 'security', label: 'إعدادات الأمان', icon: '🔒' },
     { id: 'statistics', label: 'إحصائيات الاستخدام (آخر 30 يوم)', icon: '📈' },
   ];
 
