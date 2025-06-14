@@ -5,7 +5,6 @@ import Sidebar from './components/Sidebar';
 import GeneralSettings from './components/GeneralSettings';
 import AppearanceSettings from './components/AppearanceSettings';
 import AnalyticsSettings from './components/AnalyticsSettings';
-import UsageStatistics from './components/UsageStatistics';
 
 // Enhanced components
 import WooCommerceIntegration from './components/enhanced/WooCommerceIntegration';
@@ -17,7 +16,7 @@ import UninstallSettings from './components/enhanced/UninstallSettings';
 const App = () => {
   const [activeTab, setActiveTab] = useState('general');
 
-  console.log('App activeTab:', activeTab);
+  console.log('App rendering with activeTab:', activeTab);
 
   const renderContent = () => {
     console.log('Rendering content for tab:', activeTab);

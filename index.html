@@ -1,102 +1,14 @@
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Widget Pro - WordPress Plugin</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f6f7f7;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #25D366;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .info {
-            background: #e8f5e8;
-            padding: 20px;
-            border-radius: 6px;
-            border-left: 4px solid #25D366;
-            margin: 20px 0;
-        }
-        .files {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: monospace;
-            margin: 20px 0;
-        }
-        .step {
-            margin: 15px 0;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 6px;
-            border-left: 4px solid #ffc107;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 WhatsApp Widget Pro</h1>
-        <h2>إضافة ووردبريس احترافية لويدجت الواتساب</h2>
-        
-        <div class="info">
-            <h3>📋 نظرة عامة</h3>
-            <p>هذا المشروع عبارة عن إضافة ووردبريس متكاملة تتيح إضافة ويدجت واتساب احترافي لموقعك مع:</p>
-            <ul>
-                <li>✅ إدارة فريق الدعم</li>
-                <li>✅ تتبع الإحصائيات</li>
-                <li>✅ تكامل مع Google Analytics</li>
-                <li>✅ تخصيص كامل للمظهر</li>
-                <li>✅ استجابة مع الأجهزة المحمولة</li>
-            </ul>
-        </div>
-
-        <div class="step">
-            <h3>📁 الملفات الرئيسية</h3>
-            <div class="files">
-whatsapp-widget-pro.php - الملف الرئيسي للإضافة<br>
-assets/wwp-combined.js - ملف الجافاسكريبت المدمج<br>
-assets/admin-style.css - أنماط لوحة التحكم<br>
-assets/frontend-style.css - أنماط الواجهة الأمامية<br>
-templates/admin-page.php - صفحة الإعدادات<br>
-templates/widget.php - قالب الويدجت
-            </div>
-        </div>
-
-        <div class="step">
-            <h3>🔧 طريقة التثبيت</h3>
-            <ol>
-                <li>ارفع مجلد الإضافة إلى <code>/wp-content/plugins/</code></li>
-                <li>فعّل الإضافة من لوحة تحكم ووردبريس</li>
-                <li>اذهب إلى <strong>WhatsApp Widget</strong> في القائمة الجانبية</li>
-                <li>قم بتكوين الإعدادات وأضف أعضاء الفريق</li>
-                <li>فعّل الويدجت واستمتع!</li>
-            </ol>
-        </div>
-
-        <div class="info">
-            <h3>🎯 المميزات</h3>
-            <ul>
-                <li><strong>إدارة الفريق:</strong> أضف عدة أعضاء بحالات مختلفة (متاح، غير متاح، مشغول)</li>
-                <li><strong>الإحصائيات:</strong> تتبع النقرات والمحادثات يومياً</li>
-                <li><strong>التخصيص:</strong> ألوان وأشكال ومواضع مختلفة</li>
-                <li><strong>الأمان:</strong> حماية CSRF ونظام صلاحيات متكامل</li>
-                <li><strong>التتبع:</strong> تكامل مع Google Analytics</li>
-            </ul>
-        </div>
-    </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Widget Pro - لوحة التحكم</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

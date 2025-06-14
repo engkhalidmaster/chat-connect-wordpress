@@ -5,9 +5,14 @@ import './index.css'
 import App from './App.tsx'
 import { Toaster } from '@/components/ui/toaster'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-    <Toaster />
-  </StrictMode>,
-)
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  console.error('Root element not found')
+} else {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <App />
+      <Toaster />
+    </StrictMode>
+  )
+}
