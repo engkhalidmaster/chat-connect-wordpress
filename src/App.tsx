@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import GeneralSettings from './components/GeneralSettings';
 import AppearanceSettings from './components/AppearanceSettings';
@@ -45,10 +47,13 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
+      <Header />
       <div className="flex w-full">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="flex-1 overflow-auto p-6">
-          {renderContent()}
+          <div className="max-w-6xl mx-auto">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>
