@@ -211,9 +211,7 @@ const AdvancedStatistics = () => {
                     </Pie>
                     <Tooltip />
                   </PieChart>
-                </Responsive
-
-                Container>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
