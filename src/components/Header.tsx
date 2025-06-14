@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PluginDownloader from './PluginDownloader';
 
 const Header = () => {
   const { toast } = useToast();
@@ -52,6 +53,7 @@ const Header = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <PluginDownloader />
           <Button variant="outline" size="sm" onClick={handleBackup}>
             <Download className="h-4 w-4 mr-2" />
             نسخة احتياطية
