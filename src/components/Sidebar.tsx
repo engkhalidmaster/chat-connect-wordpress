@@ -19,7 +19,10 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: 'uninstall', label: 'إلغاء التثبيت', icon: '🗑️' },
   ];
 
-  console.log('Current activeTab:', activeTab); // للتأكد من القيمة الحالية
+  const handleTabClick = (tabId: string) => {
+    console.log('Switching to tab:', tabId);
+    setActiveTab(tabId);
+  };
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col min-h-screen">
@@ -37,19 +40,22 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           {menuItems.map((item) => (
             <li key={item.id}>
               <button
-                onClick={() => {
-                  console.log('Clicking on:', item.id); // للتأكد من النقر
-                  setActiveTab(item.id);
-                }}
+                type="button"
+                onClick={() => handleTabClick(item.id)}
                 className={cn(
-                  "w-full text-right p-3 rounded-lg transition-colors flex items-center gap-3 hover:bg-gray-50",
+                  "w-full text-right p-3 rounded-lg transition-all duration-200 flex items-center gap-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
                   activeTab === item.id
-                    ? "bg-green-50 text-green-700 border border-green-200 font-medium"
-                    : "text-gray-700"
+                    ? "bg-green-50 text-green-700 border-2 border-green-200 font-medium shadow-sm"
+                    : "text-gray-700 border-2 border-transparent hover:border-gray-100"
                 )}
+                aria-pressed={activeTab === item.id}
+                aria-label={`انتقل إلى ${item.label}`}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="text-sm">{item.label}</span>
+                <span className="text-lg" role="img" aria-hidden="true">{item.icon}</span>
+                <span className="text-sm font-medium">{item.label}</span>
+                {activeTab === item.id && (
+                  <div className="mr-auto w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
               </button>
             </li>
           ))}

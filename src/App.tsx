@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import GeneralSettings from './components/GeneralSettings';
@@ -16,10 +16,13 @@ import UninstallSettings from './components/enhanced/UninstallSettings';
 const App = () => {
   const [activeTab, setActiveTab] = useState('general');
 
-  console.log('App rendering with activeTab:', activeTab);
+  const handleTabChange = useCallback((tab: string) => {
+    console.log('App: Changing tab from', activeTab, 'to', tab);
+    setActiveTab(tab);
+  }, [activeTab]);
 
   const renderContent = () => {
-    console.log('Rendering content for tab:', activeTab);
+    console.log('App: Rendering content for tab:', activeTab);
     
     switch (activeTab) {
       case 'general':
@@ -39,7 +42,7 @@ const App = () => {
       case 'uninstall':
         return <UninstallSettings />;
       default:
-        console.log('Default case, showing GeneralSettings');
+        console.log('App: Unknown tab, showing GeneralSettings');
         return <GeneralSettings />;
     }
   };
@@ -48,10 +51,12 @@ const App = () => {
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <Header />
       <div className="flex w-full">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-6xl mx-auto">
-            {renderContent()}
+            <div key={activeTab} className="animate-in fade-in-0 duration-200">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>
