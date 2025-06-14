@@ -16,6 +16,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: 'woocommerce', label: 'تكامل WooCommerce', icon: '🛒' },
     { id: 'security', label: 'إعدادات الأمان', icon: '🔒' },
     { id: 'statistics', label: 'إحصائيات الاستخدام', icon: '📈' },
+    { id: 'uninstall', label: 'إلغاء التثبيت', icon: '🗑️' },
   ];
 
   console.log('Current activeTab:', activeTab); // للتأكد من القيمة الحالية

@@ -408,6 +408,7 @@ class WWP_Ajax {
         add_action('wp_ajax_wwp_get_stats', array($this, 'get_stats'));
         add_action('wp_ajax_wwp_block_ip', array($this, 'block_ip'));
         add_action('wp_ajax_wwp_unblock_ip', array($this, 'unblock_ip'));
+        add_action('wp_ajax_wwp_uninstall_plugin', array($this, 'uninstall_plugin'));
         
         // For non-logged users (frontend clicks)
         add_action('wp_ajax_nopriv_wwp_record_click', array($this, 'record_click'));
@@ -671,6 +672,61 @@ class WWP_Ajax {
         
         $stats = WWP_Database::get_usage_stats();
         wp_send_json_success($stats);
+    }
+    
+    public function uninstall_plugin() {
+        if (!check_ajax_referer('wwp_nonce', 'nonce', false)) {
+            wp_send_json_error('فشل في التحقق من الأمان');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('غير مصرح لك بهذا الإجراء');
+        }
+        
+        try {
+            // حذف جداول قاعدة البيانات
+            WWP_Database::drop_tables();
+            
+            // حذف الإعدادات
+            delete_option('wwp_settings');
+            delete_option('wwp_db_version');
+            delete_option('wwp_woocommerce_settings');
+            delete_option('wwp_security_settings');
+            
+            // حذف ملفات التحميل
+            $upload_dir = wp_upload_dir();
+            $plugin_uploads = $upload_dir['basedir'] . '/whatsapp-widget-pro/';
+            
+            if (is_dir($plugin_uploads)) {
+                $this->delete_directory($plugin_uploads);
+            }
+            
+            // إلغاء تفعيل الإضافة
+            deactivate_plugins(plugin_basename(__FILE__));
+            
+            wp_send_json_success('تم إلغاء تثبيت الإضافة بنجاح');
+            
+        } catch (Exception $e) {
+            wp_send_json_error('حدث خطأ أثناء إلغاء التثبيت: ' . $e->getMessage());
+        }
+    }
+    
+    private function delete_directory($dir) {
+        if (!is_dir($dir)) {
+            return;
+        }
+        
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        
+        foreach ($files as $fileinfo) {
+            $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+            $todo($fileinfo->getRealPath());
+        }
+        
+        rmdir($dir);
     }
 }
 

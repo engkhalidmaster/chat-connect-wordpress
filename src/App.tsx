@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import GeneralSettings from './components/GeneralSettings';
@@ -11,6 +10,7 @@ import WooCommerceIntegration from './components/enhanced/WooCommerceIntegration
 import SecuritySettings from './components/enhanced/SecuritySettings';
 import AdvancedStatistics from './components/enhanced/AdvancedStatistics';
 import EnhancedTeamManagement from './components/enhanced/EnhancedTeamManagement';
+import UninstallSettings from './components/enhanced/UninstallSettings';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -35,6 +35,8 @@ const App = () => {
         return <SecuritySettings />;
       case 'statistics':
         return <AdvancedStatistics />;
+      case 'uninstall':
+        return <UninstallSettings />;
       default:
         console.log('Default case, showing GeneralSettings');
         return <GeneralSettings />;
