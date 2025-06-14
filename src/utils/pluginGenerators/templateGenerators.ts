@@ -5,17 +5,444 @@ export const generateAdminPageTemplate = () => {
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Get current settings
+$settings = get_option('wwp_settings', array());
+$team_members = WWP_Database::get_team_members();
+$woocommerce_settings = get_option('wwp_woocommerce_settings', array());
+$security_settings = get_option('wwp_security_settings', array());
+
+// Set defaults
+$defaults = array(
+    'show_widget' => '1',
+    'welcome_message' => 'مرحباً! كيف يمكنني مساعدتك؟',
+    'widget_position' => 'bottom-right',
+    'widget_color' => '#25D366',
+    'analytics_id' => '',
+    'enable_analytics' => '0'
+);
+$settings = wp_parse_args($settings, $defaults);
 ?>
+
 <div class="wrap">
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-    <div id="whatsapp-widget-admin-root"></div>
+    
+    <div class="wwp-admin-container">
+        <!-- Navigation Tabs -->
+        <nav class="nav-tab-wrapper">
+            <a href="#general" class="nav-tab nav-tab-active" data-tab="general">
+                <?php _e('الإعدادات العامة', 'whatsapp-widget-pro'); ?>
+            </a>
+            <a href="#team" class="nav-tab" data-tab="team">
+                <?php _e('إدارة الفريق', 'whatsapp-widget-pro'); ?>
+            </a>
+            <a href="#appearance" class="nav-tab" data-tab="appearance">
+                <?php _e('المظهر', 'whatsapp-widget-pro'); ?>
+            </a>
+            <a href="#analytics" class="nav-tab" data-tab="analytics">
+                <?php _e('الإحصائيات', 'whatsapp-widget-pro'); ?>
+            </a>
+            <?php if (class_exists('WooCommerce')): ?>
+            <a href="#woocommerce" class="nav-tab" data-tab="woocommerce">
+                <?php _e('WooCommerce', 'whatsapp-widget-pro'); ?>
+            </a>
+            <?php endif; ?>
+            <a href="#security" class="nav-tab" data-tab="security">
+                <?php _e('الأمان', 'whatsapp-widget-pro'); ?>
+            </a>
+        </nav>
+
+        <form method="post" action="" id="wwp-settings-form">
+            <?php wp_nonce_field('wwp_settings_save', 'wwp_nonce'); ?>
+            
+            <!-- General Settings Tab -->
+            <div id="general-tab" class="tab-content active">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="show_widget"><?php _e('تفعيل الويدجت', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <input type="checkbox" id="show_widget" name="show_widget" value="1" <?php checked($settings['show_widget'], '1'); ?> />
+                            <label for="show_widget"><?php _e('إظهار أيقونة WhatsApp في الموقع', 'whatsapp-widget-pro'); ?></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="welcome_message"><?php _e('رسالة الترحيب', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <textarea id="welcome_message" name="welcome_message" rows="3" cols="50" class="regular-text"><?php echo esc_textarea($settings['welcome_message']); ?></textarea>
+                            <p class="description"><?php _e('الرسالة التي ستظهر للزائرين عند النقر على الأيقونة', 'whatsapp-widget-pro'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="widget_position"><?php _e('موضع الأيقونة', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <select id="widget_position" name="widget_position">
+                                <option value="bottom-right" <?php selected($settings['widget_position'], 'bottom-right'); ?>><?php _e('أسفل اليمين', 'whatsapp-widget-pro'); ?></option>
+                                <option value="bottom-left" <?php selected($settings['widget_position'], 'bottom-left'); ?>><?php _e('أسفل اليسار', 'whatsapp-widget-pro'); ?></option>
+                                <option value="top-right" <?php selected($settings['widget_position'], 'top-right'); ?>><?php _e('أعلى اليمين', 'whatsapp-widget-pro'); ?></option>
+                                <option value="top-left" <?php selected($settings['widget_position'], 'top-left'); ?>><?php _e('أعلى اليسار', 'whatsapp-widget-pro'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="widget_color"><?php _e('لون الأيقونة', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <input type="color" id="widget_color" name="widget_color" value="<?php echo esc_attr($settings['widget_color']); ?>" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Team Management Tab -->
+            <div id="team-tab" class="tab-content" style="display: none;">
+                <div class="team-management-section">
+                    <div class="team-header">
+                        <h3><?php _e('أعضاء الفريق', 'whatsapp-widget-pro'); ?></h3>
+                        <button type="button" class="button button-primary" id="add-team-member">
+                            <?php _e('إضافة عضو جديد', 'whatsapp-widget-pro'); ?>
+                        </button>
+                    </div>
+                    
+                    <div class="team-members-list">
+                        <?php if (!empty($team_members)): ?>
+                            <?php foreach ($team_members as $member): ?>
+                            <div class="team-member-card" data-member-id="<?php echo esc_attr($member->id); ?>">
+                                <div class="member-info">
+                                    <h4><?php echo esc_html($member->name); ?></h4>
+                                    <p><?php echo esc_html($member->department); ?></p>
+                                    <span class="member-phone"><?php echo esc_html($member->phone); ?></span>
+                                    <span class="member-status status-<?php echo esc_attr($member->status); ?>">
+                                        <?php echo esc_html(ucfirst($member->status)); ?>
+                                    </span>
+                                </div>
+                                <div class="member-actions">
+                                    <button type="button" class="button edit-member" data-member-id="<?php echo esc_attr($member->id); ?>">
+                                        <?php _e('تعديل', 'whatsapp-widget-pro'); ?>
+                                    </button>
+                                    <button type="button" class="button delete-member" data-member-id="<?php echo esc_attr($member->id); ?>">
+                                        <?php _e('حذف', 'whatsapp-widget-pro'); ?>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p><?php _e('لا توجد أعضاء فريق حالياً. قم بإضافة أول عضو.', 'whatsapp-widget-pro'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="tab-content" style="display: none;">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="enable_analytics"><?php _e('تفعيل Google Analytics', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <input type="checkbox" id="enable_analytics" name="enable_analytics" value="1" <?php checked($settings['enable_analytics'], '1'); ?> />
+                            <label for="enable_analytics"><?php _e('تتبع النقرات عبر Google Analytics', 'whatsapp-widget-pro'); ?></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="analytics_id"><?php _e('معرف Google Analytics', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" id="analytics_id" name="analytics_id" value="<?php echo esc_attr($settings['analytics_id']); ?>" class="regular-text" placeholder="G-XXXXXXXXXX" />
+                            <p class="description"><?php _e('أدخل معرف Google Analytics الخاص بك', 'whatsapp-widget-pro'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div class="analytics-stats">
+                    <h3><?php _e('إحصائيات الاستخدام', 'whatsapp-widget-pro'); ?></h3>
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <h4><?php _e('إجمالي النقرات', 'whatsapp-widget-pro'); ?></h4>
+                            <span class="stat-number" id="total-clicks">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h4><?php _e('المحادثات', 'whatsapp-widget-pro'); ?></h4>
+                            <span class="stat-number" id="total-conversations">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h4><?php _e('الزائرين الفريدين', 'whatsapp-widget-pro'); ?></h4>
+                            <span class="stat-number" id="unique-visitors">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security-tab" class="tab-content" style="display: none;">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="enable_ip_blocking"><?php _e('تفعيل حظر IP', 'whatsapp-widget-pro'); ?></label>
+                        </th>
+                        <td>
+                            <input type="checkbox" id="enable_ip_blocking" name="enable_ip_blocking" value="1" />
+                            <label for="enable_ip_blocking"><?php _e('حظر العناوين المشبوهة تلقائياً', 'whatsapp-widget-pro'); ?></label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <?php submit_button(__('حفظ الإعدادات', 'whatsapp-widget-pro')); ?>
+        </form>
+    </div>
 </div>
+
+<!-- Team Member Modal -->
+<div id="team-member-modal" style="display: none;">
+    <div class="modal-content">
+        <h3 id="modal-title"><?php _e('إضافة عضو جديد', 'whatsapp-widget-pro'); ?></h3>
+        <form id="team-member-form">
+            <table class="form-table">
+                <tr>
+                    <th><label for="member-name"><?php _e('الاسم', 'whatsapp-widget-pro'); ?></label></th>
+                    <td><input type="text" id="member-name" name="name" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="member-phone"><?php _e('رقم الهاتف', 'whatsapp-widget-pro'); ?></label></th>
+                    <td><input type="text" id="member-phone" name="phone" required placeholder="+966xxxxxxxxx" /></td>
+                </tr>
+                <tr>
+                    <th><label for="member-department"><?php _e('القسم', 'whatsapp-widget-pro'); ?></label></th>
+                    <td><input type="text" id="member-department" name="department" /></td>
+                </tr>
+                <tr>
+                    <th><label for="member-status"><?php _e('الحالة', 'whatsapp-widget-pro'); ?></label></th>
+                    <td>
+                        <select id="member-status" name="status">
+                            <option value="online"><?php _e('متاح', 'whatsapp-widget-pro'); ?></option>
+                            <option value="away"><?php _e('مشغول', 'whatsapp-widget-pro'); ?></option>
+                            <option value="offline"><?php _e('غير متاح', 'whatsapp-widget-pro'); ?></option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <div class="modal-actions">
+                <button type="submit" class="button button-primary"><?php _e('حفظ', 'whatsapp-widget-pro'); ?></button>
+                <button type="button" class="button" id="cancel-modal"><?php _e('إلغاء', 'whatsapp-widget-pro'); ?></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.wwp-admin-container {
+    margin-top: 20px;
+}
+
+.tab-content {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+}
+
+.team-management-section {
+    max-width: 800px;
+}
+
+.team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.team-members-list {
+    display: grid;
+    gap: 15px;
+}
+
+.team-member-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.member-info h4 {
+    margin: 0 0 5px 0;
+    color: #23282d;
+}
+
+.member-info p {
+    margin: 0 0 5px 0;
+    color: #666;
+    font-size: 13px;
+}
+
+.member-phone {
+    font-family: monospace;
+    background: #e7e7e7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.member-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 10px;
+}
+
+.status-online {
+    background: #46b450;
+    color: white;
+}
+
+.status-away {
+    background: #ffb900;
+    color: white;
+}
+
+.status-offline {
+    background: #dc3232;
+    color: white;
+}
+
+.member-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: #f7f7f7;
+    padding: 20px;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.stat-card h4 {
+    margin: 0 0 10px 0;
+    color: #23282d;
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #0073aa;
+}
+
+#team-member-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 100000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    min-width: 400px;
+    max-width: 90%;
+}
+
+.modal-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.modal-actions .button {
+    margin: 0 5px;
+}
+</style>
+
 <script>
-    // Mount React admin interface here
-    document.addEventListener('DOMContentLoaded', function() {
-        // This would be where your React app mounts
-        console.log('WhatsApp Widget Pro admin loaded');
+jQuery(document).ready(function($) {
+    // Tab switching
+    $('.nav-tab').on('click', function(e) {
+        e.preventDefault();
+        
+        var tabId = $(this).data('tab');
+        
+        // Update active tab
+        $('.nav-tab').removeClass('nav-tab-active');
+        $(this).addClass('nav-tab-active');
+        
+        // Show/hide content
+        $('.tab-content').hide();
+        $('#' + tabId + '-tab').show();
     });
+    
+    // Team member management
+    $('#add-team-member').on('click', function() {
+        $('#modal-title').text('<?php _e('إضافة عضو جديد', 'whatsapp-widget-pro'); ?>');
+        $('#team-member-form')[0].reset();
+        $('#team-member-modal').show();
+    });
+    
+    $('#cancel-modal').on('click', function() {
+        $('#team-member-modal').hide();
+    });
+    
+    // Form submission
+    $('#wwp-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = $(this).serialize();
+        formData += '&action=wwp_save_settings';
+        
+        $.post(ajaxurl, formData, function(response) {
+            if (response.success) {
+                alert('<?php _e('تم حفظ الإعدادات بنجاح', 'whatsapp-widget-pro'); ?>');
+            } else {
+                alert('<?php _e('حدث خطأ أثناء الحفظ', 'whatsapp-widget-pro'); ?>');
+            }
+        });
+    });
+    
+    // Load statistics
+    loadStatistics();
+    
+    function loadStatistics() {
+        $.post(ajaxurl, {
+            action: 'wwp_get_stats',
+            nonce: '<?php echo wp_create_nonce('wwp_nonce'); ?>'
+        }, function(response) {
+            if (response.success) {
+                $('#total-clicks').text(response.data.total_clicks || 0);
+                $('#total-conversations').text(response.data.total_conversations || 0);
+                $('#unique-visitors').text(response.data.unique_ips || 0);
+            }
+        });
+    }
+});
 </script>`;
 };
 
