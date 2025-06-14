@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Download, FileZip, AlertCircle } from 'lucide-react';
+import { Download, Archive, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import JSZip from 'jszip';
 
@@ -139,7 +139,7 @@ const PluginDownloader = () => {
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileZip className="h-5 w-5" />
+          <Archive className="h-5 w-5" />
           تنزيل الإضافة الكاملة
         </CardTitle>
         <CardDescription>
