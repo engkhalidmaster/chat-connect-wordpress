@@ -1,5 +1,82 @@
 
 // Translation file generators
+// Simplified Arabic translation
+export const generateArabicTranslation = () => {
+  return `# WhatsApp Widget Pro - Arabic Translation
+# Copyright (C) 2024
+# This file is distributed under the same license as WhatsApp Widget Pro.
+msgid ""
+msgstr ""
+"Project-Id-Version: WhatsApp Widget Pro\\n"
+"Report-Msgid-Bugs-To: \\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\\n"
+"Last-Translator: \\n"
+"Language-Team: Arabic\\n"
+"Language: ar\\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\\n"
+
+msgid "WhatsApp Widget Pro"
+msgstr "إضافة واتساب المتطورة"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Phone Number"
+msgstr "رقم الهاتف"
+
+msgid "Welcome Message"
+msgstr "رسالة الترحيب"
+
+msgid "Widget Position"
+msgstr "موضع الويدجت"
+
+msgid "Widget Color"
+msgstr "لون الويدجت"
+
+msgid "Enable Widget"
+msgstr "تفعيل الويدجت"
+
+msgid "Save Settings"
+msgstr "حفظ الإعدادات"
+
+msgid "Settings saved successfully!"
+msgstr "تم حفظ الإعدادات بنجاح!"
+
+msgid "Total Clicks"
+msgstr "إجمالي النقرات"
+
+msgid "Widget Status"
+msgstr "حالة الويدجت"
+
+msgid "Enabled"
+msgstr "مفعل"
+
+msgid "Disabled"
+msgstr "معطل"
+
+msgid "How can we help you?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+msgid "Chat with us"
+msgstr "تحدث معنا"
+
+msgid "Bottom Right"
+msgstr "أسفل يمين"
+
+msgid "Bottom Left"
+msgstr "أسفل يسار"
+
+msgid "Top Right"
+msgstr "أعلى يمين"
+
+msgid "Top Left"
+msgstr "أعلى يسار"`;
+};
+
 export const generateTranslationFile = () => {
   return `# Copyright (C) 2024 WhatsApp Widget Pro
 # This file is distributed under the same license as the WhatsApp Widget Pro package.

@@ -1,5 +1,141 @@
 
 // Template generators for WordPress plugin
+// Simplified admin template
+export const generateAdminTemplate = () => {
+  return `<?php
+/**
+ * WhatsApp Widget Pro - Admin Page Template
+ * Simple and clean admin interface
+ */
+
+// منع الوصول المباشر
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+$settings = get_option('wwp_settings', array(
+    'phone_number' => '',
+    'welcome_message' => 'مرحباً! كيف يمكننا مساعدتك؟',
+    'position' => 'bottom-right',
+    'widget_color' => '#25d366',
+    'enabled' => '1'
+));
+
+$stats = get_option('wwp_stats', array('total_clicks' => 0));
+?>
+
+<div class="wrap whatsapp-widget-admin">
+    <h1>إعدادات WhatsApp Widget Pro</h1>
+    
+    <!-- إحصائيات بسيطة -->
+    <div class="wwp-stats">
+        <div class="wwp-stat-card">
+            <div class="wwp-stat-number"><?php echo esc_html($stats['total_clicks']); ?></div>
+            <div class="wwp-stat-label">إجمالي النقرات</div>
+        </div>
+        <div class="wwp-stat-card">
+            <div class="wwp-stat-number"><?php echo $settings['enabled'] ? 'مفعل' : 'معطل'; ?></div>
+            <div class="wwp-stat-label">حالة الويدجت</div>
+        </div>
+    </div>
+
+    <form method="post" id="wwp-settings-form">
+        <?php wp_nonce_field('wwp_settings_nonce', 'wwp_nonce'); ?>
+        
+        <table class="form-table wwp-form-table">
+            <tbody>
+                <tr>
+                    <th scope="row">
+                        <label for="wwp_enabled">تفعيل الويدجت</label>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" id="wwp_enabled" name="wwp_enabled" value="1" 
+                                   <?php checked($settings['enabled'], '1'); ?> />
+                            عرض ويدجت واتساب في الموقع
+                        </label>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="wwp_phone_number">رقم الهاتف</label>
+                    </th>
+                    <td>
+                        <input type="text" id="wwp_phone_number" name="wwp_phone_number" 
+                               value="<?php echo esc_attr($settings['phone_number']); ?>" 
+                               class="regular-text" placeholder="+966501234567" />
+                        <p class="description">أدخل رقم الهاتف مع رمز البلد (مثال: +966501234567)</p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="wwp_welcome_message">رسالة الترحيب</label>
+                    </th>
+                    <td>
+                        <textarea id="wwp_welcome_message" name="wwp_welcome_message" 
+                                  rows="3" class="large-text"><?php echo esc_textarea($settings['welcome_message']); ?></textarea>
+                        <p class="description">الرسالة التي ستظهر في نافذة الواتساب</p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="wwp_position">موضع الويدجت</label>
+                    </th>
+                    <td>
+                        <select id="wwp_position" name="wwp_position">
+                            <option value="bottom-right" <?php selected($settings['position'], 'bottom-right'); ?>>
+                                أسفل يمين
+                            </option>
+                            <option value="bottom-left" <?php selected($settings['position'], 'bottom-left'); ?>>
+                                أسفل يسار
+                            </option>
+                            <option value="top-right" <?php selected($settings['position'], 'top-right'); ?>>
+                                أعلى يمين
+                            </option>
+                            <option value="top-left" <?php selected($settings['position'], 'top-left'); ?>>
+                                أعلى يسار
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="wwp_widget_color">لون الويدجت</label>
+                    </th>
+                    <td>
+                        <input type="text" id="wwp_widget_color" name="wwp_widget_color" 
+                               value="<?php echo esc_attr($settings['widget_color']); ?>" 
+                               class="wwp-color-picker" />
+                        <p class="description">اختر لون الويدجت</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <?php submit_button('حفظ الإعدادات', 'primary', 'submit', false); ?>
+    </form>
+    
+    <!-- معاينة الويدجت -->
+    <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+        <h3>معاينة الويدجت</h3>
+        <p>سيظهر الويدجت في الموقع بهذا الشكل:</p>
+        <div style="position: relative; height: 100px; background: #fff; border: 1px solid #ddd;">
+            <div class="whatsapp-widget <?php echo esc_attr($settings['position']); ?>" 
+                 style="position: absolute;">
+                <div class="whatsapp-button" 
+                     style="background-color: <?php echo esc_attr($settings['widget_color']); ?>;">
+                    📱
+                </div>
+            </div>
+        </div>
+    </div>
+</div>`;
+};
+
 export const generateAdminPageTemplate = () => {
   return `<?php
 if (!defined('ABSPATH')) {

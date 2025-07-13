@@ -6,43 +6,26 @@ import { Download, Archive, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import JSZip from 'jszip';
 
-// Import all generator functions
+// Import simplified generator functions
 import { 
   generateMainPluginFile, 
-  generateInstallFile, 
   generateUninstallFile 
 } from '../utils/pluginGenerators/phpGenerators';
 import { 
-  generateAdminPageTemplate, 
-  generateWidgetTemplate, 
-  generateTeamPopupTemplate, 
-  generateSettingsTabsTemplate 
+  generateAdminTemplate
 } from '../utils/pluginGenerators/templateGenerators';
 import { 
-  generateAdminCSS, 
-  generateFrontendCSS, 
-  generateAdminJavaScript, 
-  generateFrontendJavaScript, 
-  generateAnalyticsJavaScript 
+  generateSimplifiedCSS, 
+  generateSimplifiedJavaScript 
 } from '../utils/pluginGenerators/assetGenerators';
 import { 
-  generateReadmeFile, 
-  generateUserGuideFile, 
-  generateInstallationGuideFile, 
-  generateTroubleshootingGuideFile 
+  generateReadmeFile
 } from '../utils/pluginGenerators/documentationGenerators';
 import { 
-  generateTranslationFile, 
-  generateBinaryTranslationFile, 
-  generatePOTFile 
+  generateArabicTranslation
 } from '../utils/pluginGenerators/translationGenerators';
 import { 
-  generateHtaccessFile, 
-  generateIndexFile, 
-  generateUpgradeFile, 
-  generateConstantsFile, 
-  generateAdminActionsFile, 
-  generateFrontendActionsFile 
+  generateSecurityIndex
 } from '../utils/pluginGenerators/utilityGenerators';
 
 const PluginDownloader = () => {
@@ -104,34 +87,24 @@ const PluginDownloader = () => {
     };
 
     return {
-      // Main plugin files
+      // Main plugin files (4 files)
       'whatsapp-widget-pro.php': generateMainPluginFile(settings),
       'readme.txt': generateReadmeFile(),
-      'assets/admin-style.css': generateAdminCSS(),
-      'assets/frontend-style.css': generateFrontendCSS(),
-      'assets/admin-script.js': generateAdminJavaScript(),
-      'assets/wwp-combined.js': generateFrontendJavaScript(),
-      'assets/analytics.js': generateAnalyticsJavaScript(),
-      'templates/admin-page.php': generateAdminPageTemplate(),
-      'templates/widget.php': generateWidgetTemplate(),
-      'templates/team-popup.php': generateTeamPopupTemplate(),
-      'templates/settings-tabs.php': generateSettingsTabsTemplate(),
-      'languages/whatsapp-widget-pro-ar.po': generateTranslationFile(),
-      'languages/whatsapp-widget-pro-ar.mo': generateBinaryTranslationFile(),
-      'languages/whatsapp-widget-pro.pot': generatePOTFile(),
-      'install.php': generateInstallFile(),
       'uninstall.php': generateUninstallFile(),
-      'upgrade.php': generateUpgradeFile(),
-      '.htaccess': generateHtaccessFile(),
-      'index.php': generateIndexFile(),
-      // Include files
-      'includes/constants.php': generateConstantsFile(),
-      'includes/admin-actions.php': generateAdminActionsFile(),
-      'includes/frontend-actions.php': generateFrontendActionsFile(),
-      // Documentation
-      'docs/user-guide.md': generateUserGuideFile(),
-      'docs/installation.md': generateInstallationGuideFile(),
-      'docs/troubleshooting.md': generateTroubleshootingGuideFile(),
+      'index.php': generateSecurityIndex(),
+      
+      // Admin template (2 files)
+      'templates/admin-page.php': generateAdminTemplate(),
+      'templates/index.php': generateSecurityIndex(),
+      
+      // Assets (3 files)
+      'assets/style.css': generateSimplifiedCSS(),
+      'assets/script.js': generateSimplifiedJavaScript(),
+      'assets/index.php': generateSecurityIndex(),
+      
+      // Translations (2 files)
+      'languages/whatsapp-widget-pro-ar.po': generateArabicTranslation(),
+      'languages/index.php': generateSecurityIndex(),
     };
   };
 
@@ -157,16 +130,20 @@ const PluginDownloader = () => {
         )}
         
         <div className="space-y-2">
-          <h4 className="font-medium">الملفات المضمنة:</h4>
+          <h4 className="font-medium">الملفات المضمنة (11 ملف فقط):</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• ملف الإضافة الرئيسي (whatsapp-widget-pro.php)</li>
-            <li>• ملفات التصميم والأنماط (CSS)</li>
-            <li>• ملفات JavaScript التفاعلية</li>
-            <li>• قوالب العرض والإدارة</li>
-            <li>• ملفات الترجمة العربية</li>
-            <li>• ملفات التثبيت والإلغاء</li>
-            <li>• وثائق المساعدة والدعم</li>
+            <li>• الملف الرئيسي المبسط (whatsapp-widget-pro.php)</li>
+            <li>• ملف تصميم موحد (assets/style.css)</li>
+            <li>• ملف جافاسكريبت مبسط (assets/script.js)</li>
+            <li>• قالب إدارة واحد (templates/admin-page.php)</li>
+            <li>• ترجمة عربية (languages/whatsapp-widget-pro-ar.po)</li>
+            <li>• ملف إلغاء التثبيت (uninstall.php)</li>
+            <li>• وصف الإضافة (readme.txt)</li>
+            <li>• ملفات الحماية (index.php في كل مجلد)</li>
           </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            إضافة مبسطة وسريعة بحجم أقل من 50KB - تحتوي على الميزات الأساسية فقط
+          </p>
         </div>
 
         <Button 

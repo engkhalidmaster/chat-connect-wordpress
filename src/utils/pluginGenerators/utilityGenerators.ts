@@ -1,5 +1,13 @@
 
 // Utility file generators
+// Security index file for all directories
+export const generateSecurityIndex = () => {
+  return `<?php
+// Silence is golden.
+// This file prevents directory browsing for security.
+`;
+};
+
 export const generateHtaccessFile = () => {
   return `# Protect plugin files
 <FilesMatch "\\.(php|js|css)$">
