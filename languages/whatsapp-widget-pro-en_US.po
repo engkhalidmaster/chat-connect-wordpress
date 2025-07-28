@@ -1,0 +1,590 @@
+# English translation for WhatsApp Widget Pro
+# Copyright (C) 2024 WhatsApp Widget Pro
+# This file is distributed under the same license as the plugin.
+
+msgid ""
+msgstr ""
+"Project-Id-Version: WhatsApp Widget Pro 1.0.0\n"
+"Report-Msgid-Bugs-To: https://whatsappwidgetpro.com/support\n"
+"POT-Creation-Date: 2024-01-28 10:00+0000\n"
+"PO-Revision-Date: 2024-01-28 10:00+0000\n"
+"Last-Translator: WhatsApp Widget Pro Team\n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Plugin name and description
+msgid "WhatsApp Widget Pro"
+msgstr "WhatsApp Widget Pro"
+
+msgid "Professional WhatsApp widget with advanced features for team management, analytics, and WooCommerce integration."
+msgstr "Professional WhatsApp widget with advanced features for team management, analytics, and WooCommerce integration."
+
+# Main menu and navigation
+msgid "WhatsApp Widget"
+msgstr "WhatsApp Widget"
+
+msgid "General Settings"
+msgstr "General Settings"
+
+msgid "Appearance & Customization"
+msgstr "Appearance & Customization"
+
+msgid "Team Management"
+msgstr "Team Management"
+
+msgid "Analytics & Reports"
+msgstr "Analytics & Reports"
+
+msgid "WooCommerce Integration"
+msgstr "WooCommerce Integration"
+
+msgid "Security & Protection"
+msgstr "Security & Protection"
+
+msgid "Advanced Settings"
+msgstr "Advanced Settings"
+
+# General Settings
+msgid "Enable Widget"
+msgstr "Enable Widget"
+
+msgid "Enable or disable WhatsApp widget on the website"
+msgstr "Enable or disable WhatsApp widget on the website"
+
+msgid "Welcome Message"
+msgstr "Welcome Message"
+
+msgid "Hello! How can we help you?"
+msgstr "Hello! How can we help you?"
+
+msgid "The message that will appear to visitors when opening the widget"
+msgstr "The message that will appear to visitors when opening the widget"
+
+msgid "Widget Position"
+msgstr "Widget Position"
+
+msgid "Bottom Right"
+msgstr "Bottom Right"
+
+msgid "Bottom Left"
+msgstr "Bottom Left"
+
+msgid "Top Right"
+msgstr "Top Right"
+
+msgid "Top Left"
+msgstr "Top Left"
+
+msgid "Display Pages"
+msgstr "Display Pages"
+
+msgid "All Pages"
+msgstr "All Pages"
+
+msgid "Home Page"
+msgstr "Home Page"
+
+msgid "Shop"
+msgstr "Shop"
+
+msgid "Product Pages"
+msgstr "Product Pages"
+
+msgid "Contact Page"
+msgstr "Contact Page"
+
+msgid "Save Settings"
+msgstr "Save Settings"
+
+msgid "Reset"
+msgstr "Reset"
+
+# Appearance Settings
+msgid "Appearance and Customization"
+msgstr "Appearance and Customization"
+
+msgid "Customize WhatsApp widget appearance"
+msgstr "Customize WhatsApp widget appearance"
+
+msgid "Primary Widget Color"
+msgstr "Primary Widget Color"
+
+msgid "Widget Size"
+msgstr "Widget Size"
+
+msgid "Small"
+msgstr "Small"
+
+msgid "Medium"
+msgstr "Medium"
+
+msgid "Large"
+msgstr "Large"
+
+msgid "Widget Style"
+msgstr "Widget Style"
+
+msgid "Classic"
+msgstr "Classic"
+
+msgid "Modern"
+msgstr "Modern"
+
+msgid "Minimal"
+msgstr "Minimal"
+
+msgid "Animation Effect"
+msgstr "Animation Effect"
+
+msgid "Bounce"
+msgstr "Bounce"
+
+msgid "Pulse"
+msgstr "Pulse"
+
+msgid "Shake"
+msgstr "Shake"
+
+msgid "None"
+msgstr "None"
+
+msgid "Save Appearance"
+msgstr "Save Appearance"
+
+msgid "Preview"
+msgstr "Preview"
+
+msgid "Live Preview"
+msgstr "Live Preview"
+
+# Team Management
+msgid "Add and manage customer service team members"
+msgstr "Add and manage customer service team members"
+
+msgid "Add New Member"
+msgstr "Add New Member"
+
+msgid "No team members"
+msgstr "No team members"
+
+msgid "Start by adding customer service team members"
+msgstr "Start by adding customer service team members"
+
+msgid "Add First Member"
+msgstr "Add First Member"
+
+msgid "Member Name"
+msgstr "Member Name"
+
+msgid "Phone Number"
+msgstr "Phone Number"
+
+msgid "Number must start with country code (example: +966)"
+msgstr "Number must start with country code (example: +966)"
+
+msgid "Department/Specialty"
+msgstr "Department/Specialty"
+
+msgid "Customer Service"
+msgstr "Customer Service"
+
+msgid "Profile Picture URL"
+msgstr "Profile Picture URL"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "End Time"
+msgstr "End Time"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "Busy"
+msgstr "Busy"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Working Hours:"
+msgstr "Working Hours:"
+
+msgid "Conversations:"
+msgstr "Conversations:"
+
+msgid "Rating:"
+msgstr "Rating:"
+
+# Analytics
+msgid "Statistics and Reports"
+msgstr "Statistics and Reports"
+
+msgid "Track WhatsApp widget performance and conversation statistics"
+msgstr "Track WhatsApp widget performance and conversation statistics"
+
+msgid "Last 7 days"
+msgstr "Last 7 days"
+
+msgid "Last 30 days"
+msgstr "Last 30 days"
+
+msgid "Last 3 months"
+msgstr "Last 3 months"
+
+msgid "Last year"
+msgstr "Last year"
+
+msgid "Export Report"
+msgstr "Export Report"
+
+msgid "Total Clicks"
+msgstr "Total Clicks"
+
+msgid "Started Conversations"
+msgstr "Started Conversations"
+
+msgid "Unique Visitors"
+msgstr "Unique Visitors"
+
+msgid "Conversion Rate"
+msgstr "Conversion Rate"
+
+msgid "Top Pages"
+msgstr "Top Pages"
+
+msgid "Page"
+msgstr "Page"
+
+msgid "Clicks"
+msgstr "Clicks"
+
+msgid "Percentage"
+msgstr "Percentage"
+
+# WooCommerce Integration
+msgid "WooCommerce integration settings"
+msgstr "WooCommerce integration settings"
+
+msgid "Warning: WooCommerce plugin is not active. Please activate it to use these features."
+msgstr "Warning: WooCommerce plugin is not active. Please activate it to use these features."
+
+msgid "Enable WooCommerce Integration"
+msgstr "Enable WooCommerce Integration"
+
+msgid "Send automatic WhatsApp messages when order status changes"
+msgstr "Send automatic WhatsApp messages when order status changes"
+
+msgid "Automatic Messages"
+msgstr "Automatic Messages"
+
+msgid "New Order - Confirmation"
+msgstr "New Order - Confirmation"
+
+msgid "Processing - Status Update"
+msgstr "Processing - Status Update"
+
+msgid "Shipped - Shipping Notification"
+msgstr "Shipped - Shipping Notification"
+
+msgid "Delivered - Delivery Confirmation"
+msgstr "Delivered - Delivery Confirmation"
+
+msgid "Message Templates"
+msgstr "Message Templates"
+
+msgid "New Order Message"
+msgstr "New Order Message"
+
+msgid "Hello {customer_name}, your order #{order_number} has been confirmed successfully. Total amount: {order_total}"
+msgstr "Hello {customer_name}, your order #{order_number} has been confirmed successfully. Total amount: {order_total}"
+
+msgid "Processing Message"
+msgstr "Processing Message"
+
+msgid "Hello {customer_name}, your order #{order_number} is now being processed."
+msgstr "Hello {customer_name}, your order #{order_number} is now being processed."
+
+msgid "Shipped Message"
+msgstr "Shipped Message"
+
+msgid "Hello {customer_name}, your order #{order_number} has been shipped. Tracking number: {tracking_number}"
+msgstr "Hello {customer_name}, your order #{order_number} has been shipped. Tracking number: {tracking_number}"
+
+msgid "Available Variables:"
+msgstr "Available Variables:"
+
+msgid "Save WooCommerce Settings"
+msgstr "Save WooCommerce Settings"
+
+msgid "Send Test Message"
+msgstr "Send Test Message"
+
+# Security Settings
+msgid "Security and Protection"
+msgstr "Security and Protection"
+
+msgid "Security settings and blocking suspicious users"
+msgstr "Security settings and blocking suspicious users"
+
+msgid "Enable IP Blocking"
+msgstr "Enable IP Blocking"
+
+msgid "Prevent blocked users from using the widget"
+msgstr "Prevent blocked users from using the widget"
+
+msgid "Enable Rate Limiting"
+msgstr "Enable Rate Limiting"
+
+msgid "Prevent excessive use of the widget by the same user"
+msgstr "Prevent excessive use of the widget by the same user"
+
+msgid "Maximum clicks per hour"
+msgstr "Maximum clicks per hour"
+
+msgid "Save Security Settings"
+msgstr "Save Security Settings"
+
+msgid "Blocked IP Addresses"
+msgstr "Blocked IP Addresses"
+
+msgid "Block Reason (optional)"
+msgstr "Block Reason (optional)"
+
+msgid "Block IP"
+msgstr "Block IP"
+
+msgid "No blocked IP addresses"
+msgstr "No blocked IP addresses"
+
+msgid "Unblock"
+msgstr "Unblock"
+
+msgid "No reason"
+msgstr "No reason"
+
+# Advanced Settings
+msgid "Advanced settings for developers and system management"
+msgstr "Advanced settings for developers and system management"
+
+msgid "Enable Google Analytics"
+msgstr "Enable Google Analytics"
+
+msgid "Track widget events in Google Analytics"
+msgstr "Track widget events in Google Analytics"
+
+msgid "Tracking ID"
+msgstr "Tracking ID"
+
+msgid "Custom CSS"
+msgstr "Custom CSS"
+
+msgid "/* Add custom CSS here */"
+msgstr "/* Add custom CSS here */"
+
+msgid "Custom JavaScript"
+msgstr "Custom JavaScript"
+
+msgid "// Add custom JavaScript here"
+msgstr "// Add custom JavaScript here"
+
+msgid "Save Advanced Settings"
+msgstr "Save Advanced Settings"
+
+msgid "System Information"
+msgstr "System Information"
+
+msgid "Plugin Version:"
+msgstr "Plugin Version:"
+
+msgid "WordPress Version:"
+msgstr "WordPress Version:"
+
+msgid "PHP Version:"
+msgstr "PHP Version:"
+
+msgid "WooCommerce:"
+msgstr "WooCommerce:"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Inactive"
+msgstr "Inactive"
+
+msgid "Danger Zone"
+msgstr "Danger Zone"
+
+msgid "Reset All Settings"
+msgstr "Reset All Settings"
+
+msgid "Clear All Analytics"
+msgstr "Clear All Analytics"
+
+msgid "Uninstall Plugin"
+msgstr "Uninstall Plugin"
+
+# Messages and notifications
+msgid "Settings saved successfully"
+msgstr "Settings saved successfully"
+
+msgid "Error occurred while saving settings"
+msgstr "Error occurred while saving settings"
+
+msgid "Connection error occurred"
+msgstr "Connection error occurred"
+
+msgid "Member added successfully"
+msgstr "Member added successfully"
+
+msgid "Member updated successfully"
+msgstr "Member updated successfully"
+
+msgid "Error occurred while saving member"
+msgstr "Error occurred while saving member"
+
+msgid "Member deleted successfully"
+msgstr "Member deleted successfully"
+
+msgid "Error occurred while deleting member"
+msgstr "Error occurred while deleting member"
+
+msgid "Are you sure you want to delete this member?"
+msgstr "Are you sure you want to delete this member?"
+
+msgid "IP address blocked successfully"
+msgstr "IP address blocked successfully"
+
+msgid "Error occurred while blocking address"
+msgstr "Error occurred while blocking address"
+
+msgid "IP address unblocked successfully"
+msgstr "IP address unblocked successfully"
+
+msgid "Error occurred while unblocking"
+msgstr "Error occurred while unblocking"
+
+# Widget frontend
+msgid "Customer Service"
+msgstr "Customer Service"
+
+msgid "We are here to help you"
+msgstr "We are here to help you"
+
+msgid "Choose the right person to talk to:"
+msgstr "Choose the right person to talk to:"
+
+msgid "Sorry, no representatives are currently available. Please try again later."
+msgstr "Sorry, no representatives are currently available. Please try again later."
+
+msgid "Hello, I want to talk to"
+msgstr "Hello, I want to talk to"
+
+# Export and import
+msgid "Export Settings"
+msgstr "Export Settings"
+
+msgid "Import Settings"
+msgstr "Import Settings"
+
+# Team member stats
+msgid "conversations"
+msgstr "conversations"
+
+msgid "team members"
+msgstr "team members"
+
+# Chart labels
+msgid "Clicks and Conversations Statistics"
+msgstr "Clicks and Conversations Statistics"
+
+msgid "Conversations"
+msgstr "Conversations"
+
+# Time formats
+msgid "now"
+msgstr "now"
+
+msgid "minute"
+msgstr "minute"
+
+msgid "hour"
+msgstr "hour"
+
+msgid "day"
+msgstr "day"
+
+msgid "month"
+msgstr "month"
+
+# Buttons and actions
+msgid "Edit Member"
+msgstr "Edit Member"
+
+msgid "Delete Member"
+msgstr "Delete Member"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Chat"
+msgstr "Chat"
+
+# Professional terms
+msgid "Professional WhatsApp widget plugin for your WordPress site"
+msgstr "Professional WhatsApp widget plugin for your WordPress site"
+
+msgid "Team Performance"
+msgstr "Team Performance"
+
+msgid "Response Time"
+msgstr "Response Time"
+
+msgid "Customer Satisfaction"
+msgstr "Customer Satisfaction"
+
+msgid "Average Response"
+msgstr "Average Response"
+
+msgid "Widget Views"
+msgstr "Widget Views"
+
+msgid "WhatsApp Conversations"
+msgstr "WhatsApp Conversations"
+
+msgid "Conversion Path"
+msgstr "Conversion Path"
+
+# Additional WooCommerce terms
+msgid "{customer_name}"
+msgstr "{customer_name}"
+
+msgid "{order_number}"
+msgstr "{order_number}"
+
+msgid "{order_total}"
+msgstr "{order_total}"
+
+msgid "{order_date}"
+msgstr "{order_date}"
+
+msgid "{site_name}"
+msgstr "{site_name}"
+
+msgid "{tracking_number}"
+msgstr "{tracking_number}"
